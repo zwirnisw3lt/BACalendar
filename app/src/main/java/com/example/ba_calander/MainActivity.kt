@@ -54,7 +54,6 @@ class MainActivity : ComponentActivity() {
 // TODO: HASH DELETE
 //hash: 4239f59c794dff7889ab8d51602b5710
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginView(modifier: Modifier = Modifier) {
     val (text1, setText1) = remember { mutableStateOf("") }
@@ -120,7 +119,7 @@ fun showCalendar(context: Context, preferences: SharedPreferences, checked: Bool
     val date = format.parse("2022-10-01 00:00:01") // Replace with your date string
     val timestamp1 = date.time / 1000
     val date2 = format.parse("2025-10-01 00:00:01") // Replace with your date string
-    val timestamp2 = date.time / 1000
+    val timestamp2 = date2.time / 1000
 
     GlobalScope.launch(Dispatchers.IO) {
         getPersonalCalendar(text1, text2, timestamp1, timestamp2)
@@ -129,6 +128,7 @@ fun showCalendar(context: Context, preferences: SharedPreferences, checked: Bool
 
 fun getPersonalCalendar (user: String, hash: String, start: Long, end: Long){
     val url = URL("https://selfservice.campus-dual.de/room/json?userid=${user}&hash=${hash}&start=${start}&end=${end}&_=1711960057052")
+    println(url)
     val connection = url.openConnection() as HttpURLConnection
 
     connection.requestMethod = "GET"
