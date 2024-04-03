@@ -4,12 +4,14 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.provider.ContactsContract.CommonDataKinds.Website.URL
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
@@ -26,14 +28,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.example.ba_calander.ui.theme.BacalanderTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import org.json.JSONObject
 import java.io.IOException
 import java.net.HttpURLConnection
+import java.net.SocketTimeoutException
 import java.net.URL
+import java.security.cert.X509Certificate
 import java.text.SimpleDateFormat
+import javax.net.ssl.HttpsURLConnection
+import javax.net.ssl.SSLContext
+import javax.net.ssl.X509TrustManager
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -56,8 +65,8 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun LoginView(modifier: Modifier = Modifier) {
-    val (text1, setText1) = remember { mutableStateOf("") }
-    val (text2, setText2) = remember { mutableStateOf("") }
+    val (text1, setText1) = remember { mutableStateOf("3004719") }
+    val (text2, setText2) = remember { mutableStateOf("4239f59c794dff7889ab8d51602b5710") }
     val (checked, setChecked) = remember { mutableStateOf(false) }
     val context = LocalContext.current
     val prefs = context.getSharedPreferences("MyApp", Context.MODE_PRIVATE)
@@ -65,20 +74,25 @@ fun LoginView(modifier: Modifier = Modifier) {
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
 
-            Text("Berufsakademie Kalernder")
+            Text("Berufsakademie Kalender", style = MaterialTheme.typography.headlineLarge, modifier = Modifier.padding(16.dp))
 
+            
             OutlinedTextField(
                 value = text1,
                 onValueChange = setText1,
                 label = { Text("Matrikelnummer") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                singleLine = true,
+                maxLines = 1
             )
 
             OutlinedTextField(
                 value = text2,
                 onValueChange = setText2,
                 label = { Text("Campus Dual Hash") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                singleLine = true,
+                maxLines = 1
             )
 
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -126,21 +140,61 @@ fun showCalendar(context: Context, preferences: SharedPreferences, checked: Bool
     }
 }
 
-fun getPersonalCalendar (user: String, hash: String, start: Long, end: Long){
-    val url = URL("https://selfservice.campus-dual.de/room/json?userid=${user}&hash=${hash}&start=${start}&end=${end}&_=1711960057052")
-    println(url)
-    val connection = url.openConnection() as HttpURLConnection
+fun getPersonalCalendar(user: String, hash: String, start: Long, end: Long) {
+    val maxAttempts = 3
+    var attempt = 0
 
-    connection.requestMethod = "GET"
+    while (attempt < maxAttempts) {
+        try {
+            val url = URL("https://selfservice.campus-dual.de/room/json?userid=${user}&hash=${hash}&start=${start}&end=${end}&_=1711960057052")
+            println(url)
+            // Create a TrustManager that trusts the server's certificate
+            val trustManager = object : X509TrustManager {
+                override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
 
-    val responseCode = connection.responseCode
+                override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
 
-    if (responseCode == HttpURLConnection.HTTP_OK) {
-        val response = connection.inputStream.bufferedReader().use { it.readText() }
-        // Parse JSON data here
-    } else {
-        throw IOException("Unexpected response code: $responseCode")
+                override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
+            }
+
+            // Create an SSLSocketFactory that uses our TrustManager
+            val sslContext = SSLContext.getInstance("TLS")
+            sslContext.init(null, arrayOf(trustManager), null)
+            val sslSocketFactory = sslContext.socketFactory
+
+            // Create an HttpsURLConnection using our SSLSocketFactory
+            val connection = url.openConnection() as HttpsURLConnection
+            connection.sslSocketFactory = sslSocketFactory
+
+            val responseCode = connection.responseCode
+            val responseMessage = connection.responseMessage
+
+            println("Response Code: $responseCode")
+            println("Response Message: $responseMessage")
+
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                val response = connection.inputStream.bufferedReader().use { it.readText() }
+
+                println("Response: $response")
+
+                val jsonObject = JSONObject(response)
+
+                break
+
+            } else {
+                throw IOException("Unexpected response code: $responseCode")
+            }
+
+            connection.disconnect()
+        } catch (e: SocketTimeoutException) {
+            Log.e("identifier", "SocketTimeoutException: ${e.message}")
+            attempt++
+            if (attempt == maxAttempts) {
+                Log.e("identifier", "Failed to connect after $maxAttempts attempts")
+            }
+        } catch (e: IOException) {
+            Log.e("identifier", "IOException: ${e.message}")
+            break
+        }
     }
-
-    connection.disconnect()
 }
