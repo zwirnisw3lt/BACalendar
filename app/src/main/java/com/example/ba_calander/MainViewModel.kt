@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -23,8 +24,6 @@ class MainViewModel : ViewModel() {
     // Define your data and functions here
     fun showCalendar(context: Context, preferences: SharedPreferences, checked: Boolean, text1: String, text2: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            val text1 = preferences.getString("text1", "") ?: ""
-            val text2 = preferences.getString("text2", "") ?: ""
 
             Log.d("identifier", "Text1: $text1")
             Log.d("identifier", "Text2: $text2")
@@ -85,7 +84,11 @@ class MainViewModel : ViewModel() {
 
                         println("Response: $response")
 
-                        val jsonObject = JSONObject(response)
+                        val mapper = jacksonObjectMapper()
+                        val jsonObject = mapper.readTree(response)
+                        jsonObject.forEach {
+                            println(it)
+                        }
 
                         break
 

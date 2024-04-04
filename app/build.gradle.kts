@@ -60,6 +60,7 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.3.1")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.0")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
