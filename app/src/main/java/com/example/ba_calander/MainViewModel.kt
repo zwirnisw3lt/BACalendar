@@ -20,6 +20,15 @@ import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLContext
 import javax.net.ssl.X509TrustManager
 
+data class Event(
+    val room: String,
+    val start: String,
+    val end: String,
+    val title: String,
+    val instructor: String,
+    val allDay: Boolean
+)
+
 class MainViewModel : ViewModel() {
     // Define your data and functions here
     fun showCalendar(context: Context, preferences: SharedPreferences, checked: Boolean, text1: String, text2: String) {
@@ -86,8 +95,18 @@ class MainViewModel : ViewModel() {
 
                         val mapper = jacksonObjectMapper()
                         val jsonObject = mapper.readTree(response)
+                        val events = mutableListOf<Event>()
+
                         jsonObject.forEach {
-                            println(it)
+                            val room = it.get("room").asText()
+                            val start = it.get("start").asText()
+                            val end = it.get("end").asText()
+                            val title = it.get("title").asText()
+                            val instructor = it.get("instructor").asText()
+                            val allDay = it.get("allDay").asBoolean()
+
+                            val event = Event(room, start, end, title, instructor, allDay)
+                            events.add(event)
                         }
 
                         break
