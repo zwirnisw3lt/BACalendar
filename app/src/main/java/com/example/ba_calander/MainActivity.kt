@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
@@ -28,7 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.ba_calander.ui.theme.BacalanderTheme
-import kotlin.properties.Delegates
+import androidx.lifecycle.LiveData
 
 enum class Screen {
     LoginView,
@@ -114,10 +116,6 @@ fun MyApp(viewModel: MainViewModel) {
                     Text("Daten Speichern")
                 }
 
-                viewModel.events.observeAsState().value?.let { events ->
-                    viewModel.events.value = events
-                }
-
                 Button(onClick = {
                     viewModel.showCalendar(context, prefs, checked, text1, text2)
                     onButtonClicked()
@@ -128,21 +126,25 @@ fun MyApp(viewModel: MainViewModel) {
         }
     }
 
-    @Composable
-    fun CalendarView(
-        events: List<Event>,
-        onLogoutClicked: () -> Unit,
-        modifier: Modifier = Modifier) {
-        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+@Composable
+fun CalendarView(
+    events: List<Event>,
+    onLogoutClicked: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        LazyColumn(horizontalAlignment = Alignment.CenterHorizontally) {
+            item {
                 Text("Calendar Ansicht")
-                events.forEach() {
-                    Text(it.title)
-                }
-                
+            }
+            item {
                 Button(onClick = { onLogoutClicked() }) {
                     Text("Logout")
                 }
             }
+            items(events) { event ->
+                Text(event.title)
+            }
         }
     }
+}
