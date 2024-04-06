@@ -3,6 +3,7 @@ package com.example.ba_calander
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -30,7 +31,7 @@ data class Event(
 )
 
 class MainViewModel : ViewModel() {
-    // Define your data and functions here
+    val events = mutableStateOf<List<Event>>(listOf())
     fun showCalendar(context: Context, preferences: SharedPreferences, checked: Boolean, text1: String, text2: String) {
         viewModelScope.launch(Dispatchers.IO) {
 
@@ -91,12 +92,10 @@ class MainViewModel : ViewModel() {
                     if (responseCode == HttpURLConnection.HTTP_OK) {
                         val response = connection.inputStream.bufferedReader().use { it.readText() }
 
-                        println("Response: $response")
-
                         val mapper = jacksonObjectMapper()
                         val jsonObject = mapper.readTree(response)
-                        val events = mutableListOf<Event>()
 
+                        val newEvents = events.value.toMutableList()
                         jsonObject.forEach {
                             val room = it.get("room").asText()
                             val start = it.get("start").asText()
@@ -106,8 +105,9 @@ class MainViewModel : ViewModel() {
                             val allDay = it.get("allDay").asBoolean()
 
                             val event = Event(room, start, end, title, instructor, allDay)
-                            events.add(event)
+                            newEvents.add(event)
                         }
+                        events.value = newEvents
 
                         break
 
