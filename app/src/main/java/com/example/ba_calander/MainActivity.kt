@@ -8,13 +8,17 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -26,16 +30,34 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.ba_calander.ui.theme.BacalanderTheme
 import androidx.lifecycle.LiveData
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 
 enum class Screen {
     LoginView,
     CalendarView
 }
+
+fun filterEvents(events: List<Event>): List<Event> {
+    val currentUnixTime = Instant.now().epochSecond
+    return events.filter { event ->
+        val startUnixTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(event.start.toLong()), ZoneOffset.UTC).toEpochSecond(ZoneOffset.UTC)
+        val endUnixTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(event.end.toLong()), ZoneOffset.UTC).toEpochSecond(ZoneOffset.UTC)
+        startUnixTime > currentUnixTime && endUnixTime > currentUnixTime
+    }
+}
+
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
 
@@ -142,8 +164,24 @@ fun CalendarView(
                     Text("Logout")
                 }
             }
-            items(events) { event ->
-                Text(event.title)
+            items(filterEvents(events)) { event ->
+                Column(modifier = Modifier.padding(vertical = 8.dp)) {
+                    Text(text = event.title, fontSize = 20.sp)
+                    Row {
+                        val formatter = DateTimeFormatter.ofPattern("HH:mm")
+                        val startTime = LocalTime.ofInstant(Instant.ofEpochSecond(event.start.toLong()), ZoneId.systemDefault()).format(formatter)
+                        val endTime = LocalTime.ofInstant(Instant.ofEpochSecond(event.end.toLong()), ZoneId.systemDefault()).format(formatter)
+                        Text("Start: $startTime")
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("End: $endTime")
+                    }
+                    Row {
+                        Text("Room: ${event.room}")
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Instructor: ${event.instructor}")
+                    }
+                    HorizontalDivider(thickness = 1.dp, color = Color.Gray)
+                }
             }
         }
     }
