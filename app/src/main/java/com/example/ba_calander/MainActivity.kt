@@ -170,10 +170,15 @@ fun CalendarListView(
     val type = object : TypeToken<List<Event>>() {}.type
     val events = if (eventsJson != null) Gson().fromJson<List<Event>>(eventsJson, type) else listOf()
 
-    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(20.dp), 
+        contentAlignment = Alignment.Center
+    ) {
         LazyColumn(horizontalAlignment = Alignment.CenterHorizontally) {
             item {
-                Text("Calendar Ansicht")
+                Text("Calendar Ansicht", fontSize = 30.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
             }
             item {
                 Button(onClick = { onLogoutClicked() }) {
