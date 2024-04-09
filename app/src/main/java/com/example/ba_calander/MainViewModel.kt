@@ -48,9 +48,9 @@ class MainViewModel : ViewModel() {
             } else {
             }
             val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-            val date = format.parse("2022-10-01 00:00:01") // Replace with your date string
+            val date = format.parse("2000-10-01 00:00:01") // Replace with your date string
             val timestamp1 = date.time / 1000
-            val date2 = format.parse("2025-10-01 00:00:01") // Replace with your date string
+            val date2 = format.parse("2099-10-01 00:00:01") // Replace with your date string
             val timestamp2 = date2.time / 1000
 
             getPersonalCalendar(text1, text2, timestamp1, timestamp2, viewModelScope, _events)
