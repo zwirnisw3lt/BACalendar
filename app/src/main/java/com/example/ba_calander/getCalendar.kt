@@ -1,12 +1,10 @@
 package com.example.ba_calander
 
 import android.util.Log
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.viewModelScope
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import java.io.IOException
 import java.net.HttpURLConnection
@@ -18,7 +16,7 @@ import javax.net.ssl.SSLContext
 import javax.net.ssl.X509TrustManager
 
 
-fun getPersonalCalendar(user: String, hash: String, start: Long, end: Long, viewModelScope: CoroutineScope, events: MutableState<List<Event>>) {
+fun getPersonalCalendar(user: String, hash: String, start: Long, end: Long, viewModelScope: CoroutineScope, events: MutableStateFlow<List<Event>>) {
     viewModelScope.launch(Dispatchers.IO) {
         val maxAttempts = 3
         var attempt = 0
