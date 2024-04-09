@@ -17,6 +17,7 @@ import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLContext
 import javax.net.ssl.X509TrustManager
 
+
 fun getPersonalCalendar(user: String, hash: String, start: Long, end: Long, viewModelScope: CoroutineScope, events: MutableState<List<Event>>) {
     viewModelScope.launch(Dispatchers.IO) {
         val maxAttempts = 3
@@ -69,7 +70,7 @@ fun getPersonalCalendar(user: String, hash: String, start: Long, end: Long, view
                         newEvents.add(event)
                     }
                     events.value = newEvents
-
+                    
                     break
 
                 } else {
