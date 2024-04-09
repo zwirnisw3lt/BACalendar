@@ -36,7 +36,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ba_calander.ui.theme.BacalanderTheme
-import androidx.lifecycle.LiveData
+import com.google.firebase.crashlytics.buildtools.reloc.com.google.common.reflect.TypeToken
+import com.google.gson.Gson
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -77,6 +78,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MyApp(viewModel: MainViewModel) {
     var currentScreen by remember { mutableStateOf(Screen.LoginView) }
+    val context = LocalContext.current
 
     BacalanderTheme {
         // A surface container using the 'background' color from the theme
@@ -86,7 +88,7 @@ fun MyApp(viewModel: MainViewModel) {
         ) {
             when (currentScreen) {
                 Screen.LoginView -> LoginView(viewModel, { currentScreen = Screen.CalendarListView })
-                Screen.CalendarListView -> CalendarListView(viewModel.events.value, { currentScreen = Screen.LoginView })
+                Screen.CalendarListView -> CalendarListView(context, { currentScreen = Screen.LoginView })
                 Screen.DailyCalendarView -> DailyCalendarView(viewModel.events.value, { currentScreen = Screen.CalendarView })
                 Screen.CalendarView -> CalendarView(viewModel.events.value, { currentScreen = Screen.CalendarListView })
             }
@@ -147,6 +149,8 @@ fun MyApp(viewModel: MainViewModel) {
 
                 Button(onClick = {
                     viewModel.showCalendar(context, prefs, checked, text1, text2)
+                    val eventsJson = Gson().toJson(viewModel.events.value)
+                    prefs.edit().putString("events", eventsJson).commit()
                     onButtonClicked()
                 }) {
                     Text("Kalender Anzeigen")
@@ -157,10 +161,15 @@ fun MyApp(viewModel: MainViewModel) {
 
 @Composable
 fun CalendarListView(
-    events: List<Event>,
+    context: Context,
     onLogoutClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val prefs = context.getSharedPreferences("MyApp", Context.MODE_PRIVATE)
+    val eventsJson = prefs.getString("events", null)
+    val type = object : TypeToken<List<Event>>() {}.type
+    val events = if (eventsJson != null) Gson().fromJson<List<Event>>(eventsJson, type) else listOf()
+
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         LazyColumn(horizontalAlignment = Alignment.CenterHorizontally) {
             item {
