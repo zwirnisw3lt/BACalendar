@@ -46,15 +46,20 @@ import java.time.format.DateTimeFormatter
 
 enum class Screen {
     LoginView,
+    CalendarListView,
+    DailyCalendarView,
     CalendarView
 }
 
 fun filterEvents(events: List<Event>): List<Event> {
-    val currentUnixTime = Instant.now().epochSecond
+    val currentDateTime = LocalDateTime.now(ZoneOffset.UTC)
+    val currentDate = currentDateTime.toLocalDate()
+
     return events.filter { event ->
-        val startUnixTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(event.start.toLong()), ZoneOffset.UTC).toEpochSecond(ZoneOffset.UTC)
-        val endUnixTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(event.end.toLong()), ZoneOffset.UTC).toEpochSecond(ZoneOffset.UTC)
-        startUnixTime > currentUnixTime && endUnixTime > currentUnixTime
+        val startDateTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(event.start.toLong()), ZoneOffset.UTC)
+        val startDate = startDateTime.toLocalDate()
+
+        !startDate.isBefore(currentDate)
     }
 }
 
@@ -80,8 +85,10 @@ fun MyApp(viewModel: MainViewModel) {
             color = MaterialTheme.colorScheme.background
         ) {
             when (currentScreen) {
-                Screen.LoginView -> LoginView(viewModel, { currentScreen = Screen.CalendarView })
-                Screen.CalendarView -> CalendarView(viewModel.events.value, { currentScreen = Screen.LoginView })
+                Screen.LoginView -> LoginView(viewModel, { currentScreen = Screen.CalendarListView })
+                Screen.CalendarListView -> CalendarListView(viewModel.events.value, { currentScreen = Screen.LoginView })
+                Screen.DailyCalendarView -> DailyCalendarView(viewModel.events.value, { currentScreen = Screen.CalendarView })
+                Screen.CalendarView -> CalendarView(viewModel.events.value, { currentScreen = Screen.CalendarListView })
             }
         }
     }
@@ -149,7 +156,7 @@ fun MyApp(viewModel: MainViewModel) {
     }
 
 @Composable
-fun CalendarView(
+fun CalendarListView(
     events: List<Event>,
     onLogoutClicked: () -> Unit,
     modifier: Modifier = Modifier
@@ -185,4 +192,20 @@ fun CalendarView(
             }
         }
     }
+}
+
+@Composable
+fun DailyCalendarView(
+    events: List<Event>,
+    onLogoutClicked: () -> Unit,
+    modifier: Modifier = Modifier
+){
+}
+
+@Composable
+fun CalendarView(
+    events: List<Event>,
+    onLogoutClicked: () -> Unit,
+    modifier: Modifier = Modifier
+){
 }
