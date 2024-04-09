@@ -17,7 +17,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.Divider
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -35,15 +34,23 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ba_calander.ui.theme.BacalanderTheme
 import com.google.firebase.crashlytics.buildtools.reloc.com.google.common.reflect.TypeToken
 import com.google.gson.Gson
+import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 enum class Screen {
     LoginView,
@@ -77,8 +84,11 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MyApp(viewModel: MainViewModel) {
-    var currentScreen by remember { mutableStateOf(Screen.LoginView) }
     val context = LocalContext.current
+    val prefs = context.getSharedPreferences("MyApp", Context.MODE_PRIVATE)
+    val user = prefs.getString("user", null)
+    val hash = prefs.getString("hash", null)
+    var currentScreen by remember { mutableStateOf(if (user != null && hash != null) Screen.CalendarListView else Screen.LoginView) }
 
     BacalanderTheme {
         // A surface container using the 'background' color from the theme
@@ -86,9 +96,12 @@ fun MyApp(viewModel: MainViewModel) {
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
+            LaunchedEffect(Unit) {
+                viewModel.loadEvents(prefs)
+            }
             when (currentScreen) {
                 Screen.LoginView -> LoginView(viewModel, { currentScreen = Screen.CalendarListView })
-                Screen.CalendarListView -> CalendarListView(context, { currentScreen = Screen.LoginView })
+                Screen.CalendarListView -> CalendarListView(viewModel, context, { currentScreen = Screen.LoginView })
                 Screen.DailyCalendarView -> DailyCalendarView(viewModel.events.value, { currentScreen = Screen.CalendarView })
                 Screen.CalendarView -> CalendarView(viewModel.events.value, { currentScreen = Screen.CalendarListView })
             }
@@ -148,10 +161,14 @@ fun MyApp(viewModel: MainViewModel) {
                 }
 
                 Button(onClick = {
-                    viewModel.showCalendar(context, prefs, checked, text1, text2)
-                    val eventsJson = Gson().toJson(viewModel.events.value)
-                    prefs.edit().putString("events", eventsJson).commit()
-                    onButtonClicked()
+                    viewModel.viewModelScope.launch {
+                        viewModel.showCalendar(context, prefs, checked, text1, text2)
+                        val eventsJson = Gson().toJson(viewModel.events.value)
+                        prefs.edit().putString("events", eventsJson).commit()
+                        withContext(Dispatchers.Main) {
+                            onButtonClicked()
+                        }
+                    }
                 }) {
                     Text("Kalender Anzeigen")
                 }
@@ -161,47 +178,55 @@ fun MyApp(viewModel: MainViewModel) {
 
 @Composable
 fun CalendarListView(
+    viewModel: MainViewModel,
     context: Context,
     onLogoutClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val prefs = context.getSharedPreferences("MyApp", Context.MODE_PRIVATE)
-    val eventsJson = prefs.getString("events", null)
-    val type = object : TypeToken<List<Event>>() {}.type
-    val events = if (eventsJson != null) Gson().fromJson<List<Event>>(eventsJson, type) else listOf()
+    val loading by viewModel.loading.collectAsState()
+    val events by viewModel.events.collectAsState()
 
     Box(
         modifier = modifier
             .fillMaxSize()
-            .padding(20.dp), 
+            .padding(20.dp),
         contentAlignment = Alignment.Center
     ) {
-        LazyColumn(horizontalAlignment = Alignment.CenterHorizontally) {
-            item {
-                Text("Calendar Ansicht", fontSize = 30.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
-            }
-            item {
-                Button(onClick = { onLogoutClicked() }) {
-                    Text("Logout")
+        if (loading) {
+            CircularProgressIndicator()
+        } else {
+          val prefs = context.getSharedPreferences("MyApp", Context.MODE_PRIVATE)
+
+            LazyColumn(horizontalAlignment = Alignment.CenterHorizontally) {
+                item {
+                    Text("Calendar Ansicht", fontSize = 30.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
                 }
-            }
-            items(filterEvents(events)) { event ->
-                Column(modifier = Modifier.padding(vertical = 8.dp)) {
-                    Text(text = event.title, fontSize = 20.sp)
-                    Row {
-                        val formatter = DateTimeFormatter.ofPattern("HH:mm")
-                        val startTime = LocalTime.ofInstant(Instant.ofEpochSecond(event.start.toLong()), ZoneId.systemDefault()).format(formatter)
-                        val endTime = LocalTime.ofInstant(Instant.ofEpochSecond(event.end.toLong()), ZoneId.systemDefault()).format(formatter)
-                        Text("Start: $startTime")
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("End: $endTime")
+                item {
+                    Button(onClick = {
+                        prefs.edit().clear().apply()
+                        onLogoutClicked()
+                    }) {
+                        Text("Logout")
                     }
-                    Row {
-                        Text("Room: ${event.room}")
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Instructor: ${event.instructor}")
+                }
+                items(filterEvents(events)) { event ->
+                    Column(modifier = Modifier.padding(vertical = 8.dp)) {
+                        Text(text = event.title, fontSize = 20.sp)
+                        Row {
+                            val formatter = DateTimeFormatter.ofPattern("HH:mm")
+                            val startTime = LocalTime.ofInstant(Instant.ofEpochSecond(event.start.toLong()), ZoneId.systemDefault()).format(formatter)
+                            val endTime = LocalTime.ofInstant(Instant.ofEpochSecond(event.end.toLong()), ZoneId.systemDefault()).format(formatter)
+                            Text("Start: $startTime")
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("End: $endTime")
+                        }
+                        Row {
+                            Text("Room: ${event.room}")
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Instructor: ${event.instructor}")
+                        }
+                        HorizontalDivider(thickness = 1.dp, color = Color.Gray)
                     }
-                    HorizontalDivider(thickness = 1.dp, color = Color.Gray)
                 }
             }
         }

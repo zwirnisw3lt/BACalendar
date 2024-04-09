@@ -64,6 +64,8 @@ dependencies {
     implementation ("androidx.datastore:datastore-preferences:1.0.0")
     implementation(libs.firebase.crashlytics.buildtools)
     implementation ("com.google.code.gson:gson:2.8.8")
+    implementation("androidx.compose.material:material:1.0.5")
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
