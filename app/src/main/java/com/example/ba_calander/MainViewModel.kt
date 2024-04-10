@@ -57,7 +57,7 @@ class MainViewModel : ViewModel() {
 
             // Convert the events to a JSON string
             val mapper = jacksonObjectMapper()
-            val eventsJson = mapper.writeValueAsString(events.value)
+            val eventsJson = mapper.writeValueAsString(_events.value)
 
             // Save the JSON string to SharedPreferences
             with(preferences.edit()) {
