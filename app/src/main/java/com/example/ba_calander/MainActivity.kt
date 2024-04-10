@@ -248,7 +248,7 @@ fun CalendarListView(
                                     .padding(8.dp)
                                     .fillMaxWidth()
                             )
-                            eventsForDate.forEachIndexed() { index, event ->
+                            eventsForDate.toSet().forEachIndexed() { index, event ->
                                 Column(modifier = Modifier.padding(8.dp)) {
                                     Spacer(modifier = Modifier.height((-8).dp))
                                     Text(text = event.title, fontSize = 20.sp)
