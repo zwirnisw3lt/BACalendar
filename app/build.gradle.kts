@@ -67,6 +67,7 @@ dependencies {
     implementation("androidx.compose.material:material:1.0.5")
     implementation ("com.google.accompanist:accompanist-swiperefresh:0.20.0")
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.protolite.well.known.types)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
