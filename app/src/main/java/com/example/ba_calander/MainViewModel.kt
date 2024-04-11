@@ -1,10 +1,14 @@
 package com.example.ba_calander
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.net.Uri
+import android.os.Environment
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContract
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -23,6 +27,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import java.io.PrintWriter
 import java.net.HttpURLConnection
 import java.net.SocketTimeoutException
 import java.net.URL
@@ -221,6 +226,30 @@ class MainViewModel() : ViewModel() {
 
                 append("END:VCALENDAR\n")
             }.toString()
+
+            withContext(Dispatchers.Main) {
+                // Create an intent to open a file chooser
+                val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                    addCategory(Intent.CATEGORY_OPENABLE)
+                    type = "text/calendar"
+                    putExtra(Intent.EXTRA_TITLE, "ba-calendar.ics")
+                }
+
+                // Start the file chooser activity
+                (context as Activity).startActivityForResult(intent, REQUEST_CODE_SAVE_FILE)
+
+                // Save the ICS file content to a temporary variable
+                _tempIcsFileContent = icsFileContent
+            }
         }
     }
+
+    // Temporary variable to hold the ICS file content
+    private var _tempIcsFileContent: String? = null
+
+    // Request code for the "save file" activity
+    companion object {
+        const val REQUEST_CODE_SAVE_FILE = 1
+    }
+
 }
