@@ -65,6 +65,7 @@ dependencies {
     implementation(libs.firebase.crashlytics.buildtools)
     implementation ("com.google.code.gson:gson:2.8.8")
     implementation("androidx.compose.material:material:1.0.5")
+    implementation ("com.google.accompanist:accompanist-swiperefresh:0.20.0")
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

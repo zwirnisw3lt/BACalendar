@@ -62,6 +62,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.Locale
@@ -112,6 +114,9 @@ fun MyApp(viewModel: MainViewModel) {
         ) {
             LaunchedEffect(Unit) {
                 viewModel.loadEvents(prefs)
+                if (user != null && hash != null) {
+                    viewModel.updateEvents(prefs, context)
+                }
             }
             when (currentScreen) {
                 Screen.LoginView -> LoginView(viewModel, { currentScreen = Screen.CalendarListView })
@@ -200,10 +205,15 @@ fun CalendarListView(
 ) {
     val loading by viewModel.loading.collectAsState()
     val events by viewModel.events.collectAsState()
+    val loadingRefresh by viewModel.loadingRefresh.collectAsState()
+
+    val prefs = context.getSharedPreferences("MyApp", Context.MODE_PRIVATE)
 
     val groupedEvents = filterEvents(events).groupBy {
         Instant.ofEpochSecond(it.start.toLong()).atZone(ZoneId.systemDefault()).toLocalDate()
     }
+
+    val swipeRefreshState = rememberSwipeRefreshState(isRefreshing = loadingRefresh)
 
     Box(
         modifier = modifier
@@ -214,8 +224,10 @@ fun CalendarListView(
         if (loading) {
             CircularProgressIndicator()
         } else {
-          val prefs = context.getSharedPreferences("MyApp", Context.MODE_PRIVATE)
-
+            SwipeRefresh(
+                state = swipeRefreshState,
+                onRefresh = { viewModel.updateEvents(prefs, context) }
+            ) {
             LazyColumn(horizontalAlignment = Alignment.CenterHorizontally) {
                 item {
                     Text("Calendar Ansicht", fontSize = 30.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
@@ -284,7 +296,7 @@ fun CalendarListView(
                     }
                 }
             }
-
+            }
         }
     }
 }
