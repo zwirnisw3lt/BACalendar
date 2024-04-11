@@ -1,6 +1,7 @@
 package com.example.ba_calander
 
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.util.Log
 import android.widget.Toast
@@ -12,23 +13,31 @@ import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.google.firebase.crashlytics.buildtools.reloc.com.google.common.reflect.TypeToken
 import com.google.gson.Gson
+import com.google.type.DateTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.FileOutputStream
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.SocketTimeoutException
 import java.net.URL
 import java.security.cert.X509Certificate
 import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLContext
 import javax.net.ssl.X509TrustManager
 
 
+// Data class to store the events 
 data class Event(
     val room: String,
     val start: String,
@@ -47,6 +56,7 @@ class MainViewModel() : ViewModel() {
 
     val loadingRefresh = MutableStateFlow(false)
 
+    // Function to fetch the personal calendar from the Campus Dual API using the user and hash
     fun getPersonalCalendar(user: String, hash: String) {
         val maxAttempts = 3
         var attempt = 0
@@ -138,6 +148,7 @@ class MainViewModel() : ViewModel() {
         }
     }
 
+    // Function to show the calendar and save the user and hash to SharedPreferences
     fun showCalendar(context: Context, preferences: SharedPreferences, checked: Boolean, text1: String, text2: String) {
         _loading.value = true
         viewModelScope.launch(Dispatchers.IO) {
@@ -167,6 +178,7 @@ class MainViewModel() : ViewModel() {
         }
     }
 
+    // Function to load the events from SharedPreferences
     fun loadEvents(prefs: SharedPreferences) {
         val eventsJson = prefs.getString("events", null)
         val type = object : TypeToken<List<Event>>() {}.type
@@ -174,6 +186,7 @@ class MainViewModel() : ViewModel() {
         _events.value = events
     }
 
+    // Function to update the events
     fun updateEvents(pref: SharedPreferences, context: Context) {
         viewModelScope.launch(Dispatchers.IO) {
             loadingRefresh.value = true
@@ -182,6 +195,32 @@ class MainViewModel() : ViewModel() {
                 Toast.makeText(context, "Data has been updated", Toast.LENGTH_SHORT).show()
             }
             loadingRefresh.value = false
+        }
+    }
+
+    // Function to download the events as an ICS file
+    fun downloadAsIcs(events: List<Event>, context: Context) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val icsFileContent = StringBuilder().apply {
+                append("BEGIN:VCALENDAR\n")
+                append("VERSION:2.0\n")
+                append("PRODID:-//hacksw/handcal//NONSGML v1.0//EN\n")
+
+                val dateFormat = SimpleDateFormat("dd.MM.yyyy'T'HH:mm:ss'Z'", Locale.GERMANY)
+                dateFormat.timeZone = TimeZone.getTimeZone("Europe/Berlin")
+
+                for (event in events) {
+                    append("BEGIN:VEVENT\n")
+                    append("DTSTART:${dateFormat.format(Date(event.start.toLong() * 1000))}\n") // Convert to milliseconds
+                    append("DTEND:${dateFormat.format(Date(event.end.toLong() * 1000))}\n")
+                    append("SUMMARY:${event.title}\n")
+                    append("INSTRUCTOR:${event.instructor}\n")
+                    append("LOCATION:${event.room}\n")
+                    append("END:VEVENT\n")
+                }
+
+                append("END:VCALENDAR\n")
+            }.toString()
         }
     }
 }

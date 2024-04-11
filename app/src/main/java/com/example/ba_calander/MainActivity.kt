@@ -239,6 +239,11 @@ fun CalendarListView(
                     }) {
                         Text("Logout")
                     }
+                    Button(onClick = {
+                        viewModel.downloadAsIcs(viewModel.events.value, context)
+                    }) {
+                        Text("Download as .ics")
+                    }
                 }
                 items(groupedEvents.keys.toList()) { date ->
                     val eventsForDate = groupedEvents[date] ?: listOf()
