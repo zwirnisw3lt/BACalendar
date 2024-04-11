@@ -24,9 +24,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.BufferedWriter
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import java.io.OutputStreamWriter
 import java.io.PrintWriter
 import java.net.HttpURLConnection
 import java.net.SocketTimeoutException
@@ -204,16 +206,16 @@ class MainViewModel() : ViewModel() {
     }
 
     // Function to download the events as an ICS file
-    fun downloadAsIcs(events: List<Event>, context: Context) {
+    fun downloadAndSaveAsIcs(events: List<Event>, context: Context) {
         viewModelScope.launch(Dispatchers.IO) {
             val icsFileContent = StringBuilder().apply {
                 append("BEGIN:VCALENDAR\n")
                 append("VERSION:2.0\n")
                 append("PRODID:-//hacksw/handcal//NONSGML v1.0//EN\n")
-
+    
                 val dateFormat = SimpleDateFormat("dd.MM.yyyy'T'HH:mm:ss'Z'", Locale.GERMANY)
                 dateFormat.timeZone = TimeZone.getTimeZone("Europe/Berlin")
-
+    
                 for (event in events) {
                     append("BEGIN:VEVENT\n")
                     append("DTSTART:${dateFormat.format(Date(event.start.toLong() * 1000))}\n") // Convert to milliseconds
@@ -223,10 +225,10 @@ class MainViewModel() : ViewModel() {
                     append("LOCATION:${event.room}\n")
                     append("END:VEVENT\n")
                 }
-
+    
                 append("END:VCALENDAR\n")
             }.toString()
-
+    
             withContext(Dispatchers.Main) {
                 // Create an intent to open a file chooser
                 val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
@@ -234,16 +236,15 @@ class MainViewModel() : ViewModel() {
                     type = "text/calendar"
                     putExtra(Intent.EXTRA_TITLE, "ba-calendar.ics")
                 }
-
+    
                 // Start the file chooser activity
                 (context as Activity).startActivityForResult(intent, REQUEST_CODE_SAVE_FILE)
-
+    
                 // Save the ICS file content to a temporary variable
                 _tempIcsFileContent = icsFileContent
             }
         }
     }
-
     // Temporary variable to hold the ICS file content
     private var _tempIcsFileContent: String? = null
 
@@ -252,4 +253,13 @@ class MainViewModel() : ViewModel() {
         const val REQUEST_CODE_SAVE_FILE = 1
     }
 
+    fun saveIcsFileContent(context: Context, uri: Uri) {
+        _tempIcsFileContent?.let { content ->
+            context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                BufferedWriter(OutputStreamWriter(outputStream)).use { writer ->
+                    writer.write(content)
+                }
+            }
+        }
+    }
 }
