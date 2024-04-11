@@ -100,6 +100,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    // TODO: find a better way to handle this
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
