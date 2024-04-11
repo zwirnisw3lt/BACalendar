@@ -64,6 +64,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import com.example.ba_calander.MainViewModel.Companion.REQUEST_CODE_SAVE_FILE
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlinx.coroutines.Dispatchers
@@ -96,6 +97,16 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MyApp(viewModel)
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == REQUEST_CODE_SAVE_FILE && resultCode == Activity.RESULT_OK) {
+            data?.data?.also { uri ->
+                viewModel.saveIcsFileContent(this, uri)
+            }
         }
     }
 }
@@ -242,7 +253,7 @@ fun CalendarListView(
                         Text("Logout")
                     }
                     Button(onClick = {
-                        viewModel.downloadAsIcs(viewModel.events.value, context)
+                        viewModel.downloadAndSaveAsIcs(viewModel.events.value, context)
                     }) {
                         Text("Download as .ics")
                     }
