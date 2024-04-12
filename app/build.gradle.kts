@@ -69,6 +69,7 @@ dependencies {
     implementation ("androidx.compose.ui:ui:1.1.0")
     implementation ("androidx.compose.material:material:1.1.0")
     implementation ("androidx.compose.material:material-icons-extended:1.1.0")
+    implementation ("io.noties.markwon:core:4.6.2")
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.protolite.well.known.types)
     implementation(libs.transport.api)

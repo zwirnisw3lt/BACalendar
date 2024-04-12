@@ -5,11 +5,14 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.text.method.LinkMovementMethod
+import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -60,16 +63,24 @@ import java.time.format.DateTimeFormatter
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Divider
 import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.HelpOutline
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.viewinterop.AndroidView
 import com.example.ba_calander.MainViewModel.Companion.REQUEST_CODE_SAVE_FILE
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import io.noties.markwon.Markwon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.Locale
@@ -113,6 +124,11 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+}
+
+fun loadMarkdownContent(context: Context): String {
+    val inputStream = context.assets.open("hash_help.md")
+    return inputStream.bufferedReader().use { it.readText() }
 }
 
 @Composable
@@ -159,19 +175,36 @@ fun LoginView(
     val (checked, setChecked) = remember { mutableStateOf(false) }
     val context = LocalContext.current
     val prefs = context.getSharedPreferences("MyApp", Context.MODE_PRIVATE)
+    var showDialog by remember { mutableStateOf(false) }
+    var markdownContent by remember { mutableStateOf("") }
 
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Card(
+        OutlinedCard(
             modifier = Modifier.padding(16.dp),
             shape = RoundedCornerShape(16.dp),
-            elevation = 8.dp
+
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(16.dp)) {
-                Text(
-                    "Berufsakademie Kalender",
-                    style = MaterialTheme.typography.headlineMedium,
-                    modifier = Modifier.padding(16.dp)
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        "Berufsakademie Kalender",
+                        style = MaterialTheme.typography.headlineMedium,
+                        modifier = Modifier.weight(0.9f) // allocate 90% of the width to the Text
+                    )
+                    IconButton(
+                        onClick = {
+                            markdownContent = loadMarkdownContent(context)
+                            showDialog = true
+                        },
+                        modifier = Modifier.weight(0.1f) // allocate 10% of the width to the IconButton
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.HelpOutline, contentDescription = "Help Icon", tint = MaterialTheme.colorScheme.onSurface)
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(24.dp))
 
@@ -229,9 +262,45 @@ fun LoginView(
                     Spacer(Modifier.width(8.dp))
                     Text("Kalender Anzeigen")
                 }
+
+                if (showDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showDialog = false },
+                        text = { MarkdownText(markdownContent) },
+                        confirmButton = {
+                            Button(onClick = { showDialog = false }) {
+                                Text("Close")
+                            }
+                        }
+                    )
+                }
             }
         }
     }
+}
+
+@Composable
+fun MarkdownText(markdownContent: String) {
+    val context = LocalContext.current
+    val markwon = remember {
+        Markwon.builder(context).build()
+    }
+    val markdown = remember(markdownContent) {
+        markwon.toMarkdown(markdownContent)
+    }
+
+    val textcolor = MaterialTheme.colorScheme.onSurface.toArgb()
+    AndroidView(
+        factory = { context ->
+            TextView(context).apply {
+                movementMethod = LinkMovementMethod.getInstance()
+                setTextColor(textcolor)
+            }
+        },
+        update = { view ->
+            markwon.setParsedMarkdown(view, markdown)
+        }
+    )
 }
 
 @SuppressLint("SuspiciousIndentation")
