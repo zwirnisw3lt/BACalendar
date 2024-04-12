@@ -5,37 +5,26 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.net.Uri
-import android.os.Environment
 import android.util.Log
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContract
-import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.google.firebase.crashlytics.buildtools.reloc.com.google.common.reflect.TypeToken
 import com.google.gson.Gson
-import com.google.type.DateTime
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.BufferedWriter
-import java.io.File
-import java.io.FileOutputStream
 import java.io.IOException
 import java.io.OutputStreamWriter
-import java.io.PrintWriter
 import java.net.HttpURLConnection
 import java.net.SocketTimeoutException
 import java.net.URL
 import java.security.cert.X509Certificate
 import java.text.SimpleDateFormat
-import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
@@ -54,7 +43,7 @@ data class Event(
     val allDay: Boolean
 )
 
-class MainViewModel() : ViewModel() {
+class MainViewModel : ViewModel() {
     private val _events = MutableStateFlow<List<Event>>(listOf())
     val events: StateFlow<List<Event>> = _events
 
@@ -156,7 +145,13 @@ class MainViewModel() : ViewModel() {
     }
 
     // Function to show the calendar and save the user and hash to SharedPreferences
-    fun showCalendar(context: Context, preferences: SharedPreferences, checked: Boolean, text1: String, text2: String) {
+    fun showCalendar(
+        context: Context,
+        preferences: SharedPreferences,
+        checked: Boolean,
+        text1: String,
+        text2: String
+    ) {
         _loading.value = true
         viewModelScope.launch(Dispatchers.IO) {
 
@@ -188,7 +183,8 @@ class MainViewModel() : ViewModel() {
     fun loadEvents(prefs: SharedPreferences) {
         val eventsJson = prefs.getString("events", null)
         val type = object : TypeToken<List<Event>>() {}.type
-        val events = if (eventsJson != null) Gson().fromJson<List<Event>>(eventsJson, type) else listOf()
+        val events =
+            if (eventsJson != null) Gson().fromJson<List<Event>>(eventsJson, type) else listOf()
         _events.value = events
     }
 
@@ -211,7 +207,7 @@ class MainViewModel() : ViewModel() {
                 append("BEGIN:VCALENDAR\n")
                 append("VERSION:2.0\n")
                 append("PRODID:-//hacksw/handcal//NONSGML v1.0//EN\n")
-    
+
                 val dateFormat = SimpleDateFormat("yyyyMMdd'T'HHmmss'Z'", Locale.GERMANY)
                 dateFormat.timeZone = TimeZone.getTimeZone("UTC")
 
@@ -226,10 +222,10 @@ class MainViewModel() : ViewModel() {
                     append("ALLDAY:${event.allDay}\n")
                     append("END:VEVENT\n")
                 }
-    
+
                 append("END:VCALENDAR\n")
             }.toString()
-    
+
             withContext(Dispatchers.Main) {
                 // Create an intent to open a file chooser
                 val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
@@ -237,15 +233,16 @@ class MainViewModel() : ViewModel() {
                     type = "text/calendar"
                     putExtra(Intent.EXTRA_TITLE, "ba-calendar.ics")
                 }
-    
+
                 // Start the file chooser activity
                 (context as Activity).startActivityForResult(intent, REQUEST_CODE_SAVE_FILE)
-    
+
                 // Save the ICS file content to a temporary variable
                 _tempIcsFileContent = icsFileContent
             }
         }
     }
+
     // Temporary variable to hold the ICS file content
     private var _tempIcsFileContent: String? = null
 

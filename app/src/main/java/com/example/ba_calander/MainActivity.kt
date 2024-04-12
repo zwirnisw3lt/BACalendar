@@ -67,7 +67,6 @@ import androidx.compose.material.IconButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.OutlinedCard
@@ -342,7 +341,7 @@ fun CalendarListView(
             ) {
             LazyColumn(horizontalAlignment = Alignment.CenterHorizontally) {
                 item {
-                    Text("Calendar Ansicht", fontSize = 30.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                    Text("Calendar Ansicht", fontSize = 30.sp, fontWeight = FontWeight.Bold)
                 }
                 item {
                     Button(onClick = {
@@ -377,7 +376,7 @@ fun CalendarListView(
                                     .padding(8.dp)
                                     .fillMaxWidth()
                             )
-                            eventsForDate.toSet().forEachIndexed() { index, event ->
+                            eventsForDate.toSet().forEachIndexed { index, event ->
                                 Column(modifier = Modifier.padding(8.dp)) {
                                     Spacer(modifier = Modifier.height((-8).dp))
                                     Text(text = event.title, fontSize = 20.sp)
