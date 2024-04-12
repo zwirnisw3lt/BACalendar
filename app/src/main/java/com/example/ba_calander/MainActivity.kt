@@ -59,6 +59,9 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Divider
+import androidx.compose.material.Icon
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -145,27 +148,32 @@ fun MyApp(viewModel: MainViewModel) {
 // TODO: HASH DELETE
 //hash: hash
 
-    @Composable
-    fun LoginView(
-        viewModel: MainViewModel,
-        onButtonClicked: () -> Unit,
-        modifier: Modifier = Modifier
-    ) {
-        val (text1, setText1) = remember { mutableStateOf("number") }
-        val (text2, setText2) = remember { mutableStateOf("hash") }
-        val (checked, setChecked) = remember { mutableStateOf(false) }
-        val context = LocalContext.current
-        val prefs = context.getSharedPreferences("MyApp", Context.MODE_PRIVATE)
+@Composable
+fun LoginView(
+    viewModel: MainViewModel,
+    onButtonClicked: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val (text1, setText1) = remember { mutableStateOf("number") }
+    val (text2, setText2) = remember { mutableStateOf("hash") }
+    val (checked, setChecked) = remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val prefs = context.getSharedPreferences("MyApp", Context.MODE_PRIVATE)
 
-        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-
+    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Card(
+            modifier = Modifier.padding(16.dp),
+            shape = RoundedCornerShape(16.dp),
+            elevation = 8.dp
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(16.dp)) {
                 Text(
                     "Berufsakademie Kalender",
-                    style = MaterialTheme.typography.headlineLarge,
+                    style = MaterialTheme.typography.headlineMedium,
                     modifier = Modifier.padding(16.dp)
                 )
 
+                Spacer(modifier = Modifier.height(24.dp))
 
                 OutlinedTextField(
                     value = text1,
@@ -173,8 +181,11 @@ fun MyApp(viewModel: MainViewModel) {
                     label = { Text("Matrikelnummer") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
                     singleLine = true,
-                    maxLines = 1
+                    maxLines = 1,
+                    modifier = Modifier.fillMaxWidth(0.8f)
                 )
+
+                Spacer(modifier = Modifier.height(16.dp))
 
                 OutlinedTextField(
                     value = text2,
@@ -182,10 +193,16 @@ fun MyApp(viewModel: MainViewModel) {
                     label = { Text("Campus Dual Hash") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
                     singleLine = true,
-                    maxLines = 1
+                    maxLines = 1,
+                    modifier = Modifier.fillMaxWidth(0.8f)
                 )
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth(0.8f)
+                ) {
                     Checkbox(
                         checked = checked,
                         onCheckedChange = setChecked,
@@ -193,21 +210,29 @@ fun MyApp(viewModel: MainViewModel) {
                     Text("Daten Speichern")
                 }
 
-                Button(onClick = {
-                    viewModel.viewModelScope.launch {
-                        viewModel.showCalendar(context, prefs, checked, text1, text2)
-                        val eventsJson = Gson().toJson(viewModel.events.value)
-                        prefs.edit().putString("events", eventsJson).commit()
-                        withContext(Dispatchers.Main) {
-                            onButtonClicked()
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Button(
+                    onClick = {
+                        viewModel.viewModelScope.launch {
+                            viewModel.showCalendar(context, prefs, checked, text1, text2)
+                            val eventsJson = Gson().toJson(viewModel.events.value)
+                            prefs.edit().putString("events", eventsJson).commit()
+                            withContext(Dispatchers.Main) {
+                                onButtonClicked()
+                            }
                         }
-                    }
-                }) {
+                    },
+                    modifier = Modifier.fillMaxWidth(0.8f)
+                ) {
+                    Icon(Icons.Filled.CalendarToday, contentDescription = "Calendar Icon")
+                    Spacer(Modifier.width(8.dp))
                     Text("Kalender Anzeigen")
                 }
             }
         }
     }
+}
 
 @SuppressLint("SuspiciousIndentation")
 @Composable
