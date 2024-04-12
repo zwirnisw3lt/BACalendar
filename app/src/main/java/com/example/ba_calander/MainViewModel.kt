@@ -213,14 +213,14 @@ class MainViewModel() : ViewModel() {
                 append("VERSION:2.0\n")
                 append("PRODID:-//hacksw/handcal//NONSGML v1.0//EN\n")
     
-                val dateFormat = SimpleDateFormat("dd.MM.yyyy'T'HH:mm:ss'Z'", Locale.GERMANY)
-                dateFormat.timeZone = TimeZone.getTimeZone("Europe/Berlin")
-    
+                val dateFormat = SimpleDateFormat("yyyyMMdd'T'HHmmss'Z'", Locale.GERMANY)
+                dateFormat.timeZone = TimeZone.getTimeZone("UTC")
+
                 for (event in events) {
                     append("BEGIN:VEVENT\n")
                     append("DTSTART:${dateFormat.format(Date(event.start.toLong() * 1000))}\n") // Convert to milliseconds
-                    append("DTEND:${dateFormat.format(Date(event.end.toLong() * 1000))}\n")
-                    append("SUMMARY:${event.title}\n")
+                    append("DTEND:${dateFormat.format(Date(event.end.toLong() * 1000))}\n") // Convert to milliseconds
+                    append("UID:${event.title}\n")
                     append("INSTRUCTOR:${event.instructor}\n")
                     append("LOCATION:${event.room}\n")
                     append("END:VEVENT\n")
