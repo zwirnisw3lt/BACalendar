@@ -221,8 +221,10 @@ class MainViewModel() : ViewModel() {
                     append("DTSTART:${dateFormat.format(Date(event.start.toLong() * 1000))}\n") // Convert to milliseconds
                     append("DTEND:${dateFormat.format(Date(event.end.toLong() * 1000))}\n") // Convert to milliseconds
                     append("UID:${event.title}\n")
+                    append("SUMMARY:${event.title + " | " + event.instructor}\n")
                     append("INSTRUCTOR:${event.instructor}\n")
                     append("LOCATION:${event.room}\n")
+                    append("ALLDAY:${event.allDay}\n")
                     append("END:VEVENT\n")
                 }
     
