@@ -258,7 +258,11 @@ fun LoginView(
                     },
                     modifier = Modifier.fillMaxWidth(0.8f)
                 ) {
-                    Icon(Icons.Filled.CalendarToday, contentDescription = "Calendar Icon")
+                    Icon(
+                        Icons.Filled.CalendarToday,
+                        contentDescription = "Calendar Icon",
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
                     Spacer(Modifier.width(8.dp))
                     Text("Kalender Anzeigen")
                 }
