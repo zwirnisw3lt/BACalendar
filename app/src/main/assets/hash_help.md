@@ -1,6 +1,6 @@
-# Matrikel Nummer
+# Matrikelnummer
 
-Gib die Matrikel Nummer ohne das typische `s` ein.
+Gib die Matrikelnummer ohne das typische `s` ein.
 
 # Hash finden
 
