@@ -166,7 +166,6 @@ class MainViewModel() : ViewModel() {
                     putString("hash", text2)
                     apply()
                 }
-            } else {
             }
 
             getPersonalCalendar(text1, text2)
