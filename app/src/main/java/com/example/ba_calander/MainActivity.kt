@@ -6,11 +6,13 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.text.method.LinkMovementMethod
+import android.view.WindowManager
 import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,6 +20,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -31,6 +34,8 @@ import androidx.compose.material.IconButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.ViewAgenda
+import androidx.compose.material.icons.filled.ViewDay
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
@@ -57,6 +62,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewModelScope
 import com.example.ba_calander.MainViewModel.Companion.REQUEST_CODE_SAVE_FILE
 import com.example.ba_calander.ui.theme.BacalanderTheme
@@ -102,6 +108,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             MyApp(viewModel)
         }
+        // TODO: Change Status Bar Color
     }
 
     // TODO: find a better way to handle this
@@ -142,10 +149,10 @@ fun MyApp(viewModel: MainViewModel) {
                 }
             }
             when (currentScreen) {
-                Screen.LoginView -> LoginView(viewModel, { currentScreen = Screen.CalendarListView })
-                Screen.CalendarListView -> CalendarListView(viewModel, context, { currentScreen = Screen.LoginView })
-                Screen.DailyCalendarView -> DailyCalendarView(viewModel.events.value, { currentScreen = Screen.CalendarView })
-                Screen.CalendarView -> CalendarView(viewModel.events.value, { currentScreen = Screen.CalendarListView })
+                Screen.LoginView -> LoginView(viewModel, { currentScreen = Screen.CalendarListView }, { currentScreen = Screen.DailyCalendarView })
+                Screen.CalendarListView -> CalendarListView(viewModel, context, { currentScreen = Screen.LoginView }, { currentScreen = Screen.DailyCalendarView })
+                Screen.DailyCalendarView -> DailyCalendarView(viewModel.events.value, { currentScreen = Screen.CalendarView }, { currentScreen = Screen.CalendarListView })
+                Screen.CalendarView -> CalendarView(viewModel.events.value, { currentScreen = Screen.CalendarListView }, { currentScreen = Screen.DailyCalendarView })
             }
         }
     }
@@ -158,6 +165,7 @@ fun MyApp(viewModel: MainViewModel) {
 fun LoginView(
     viewModel: MainViewModel,
     onButtonClicked: () -> Unit,
+    onSwitchViewClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val (text1, setText1) = remember { mutableStateOf("number") }
@@ -303,6 +311,7 @@ fun CalendarListView(
     viewModel: MainViewModel,
     context: Context,
     onLogoutClicked: () -> Unit,
+    onSwitchViewClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val loading by viewModel.loading.collectAsState()
@@ -345,6 +354,12 @@ fun CalendarListView(
                         viewModel.downloadAndSaveAsIcs(viewModel.events.value, context)
                     }) {
                         Text("Download as .ics")
+                    }
+                    IconButton(onClick = onSwitchViewClicked) {
+                        Icon(
+                            imageVector = Icons.Filled.ViewDay,
+                            contentDescription = "Switch to Daily View"
+                        )
                     }
                 }
                 items(groupedEvents.keys.toList()) { date ->
@@ -412,14 +427,51 @@ fun CalendarListView(
 fun DailyCalendarView(
     events: List<Event>,
     onLogoutClicked: () -> Unit,
+    onSwitchViewClicked: () -> Unit,
     modifier: Modifier = Modifier
-){
+) {
+    val currentTime = LocalTime.now()
+    val startHour = 7
+    val endHour = 18
+    val hours = (startHour..endHour).toList()
+
+    IconButton(onClick = onSwitchViewClicked) {
+        Icon(
+            imageVector = Icons.Filled.ViewAgenda,
+            contentDescription = "Switch to List View"
+        )
+    }
+
+    LazyColumn(modifier = modifier) {
+        items(hours) { hour ->
+            Box(modifier = Modifier.height(60.dp)) {
+                Text(text = "$hour:00", modifier = Modifier.padding(start = 8.dp))
+                if (hour == currentTime.hour) {
+                    val minutesRatio = currentTime.minute / 60f
+                    val offsetY = 60.dp * minutesRatio
+                    CurrentTimeIndicator(modifier = Modifier.offset(y = offsetY))
+                }
+            }
+        }
+    }
+
+}
+
+@Composable
+fun CurrentTimeIndicator(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .height(2.dp)
+            .fillMaxWidth()
+            .background(Color.Red)
+    )
 }
 
 @Composable
 fun CalendarView(
     events: List<Event>,
     onLogoutClicked: () -> Unit,
+    onSwitchViewClicked: () -> Unit,
     modifier: Modifier = Modifier
 ){
 }
