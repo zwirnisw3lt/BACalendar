@@ -15,6 +15,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -54,12 +55,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -159,7 +162,7 @@ fun MyApp(viewModel: MainViewModel) {
             when (currentScreen) {
                 Screen.LoginView -> LoginView(viewModel, { currentScreen = Screen.CalendarListView }, { currentScreen = Screen.DailyCalendarView })
                 Screen.CalendarListView -> CalendarListView(viewModel, context, { currentScreen = Screen.LoginView }, { currentScreen = Screen.DailyCalendarView })
-                Screen.DailyCalendarView -> DailyCalendarView(viewModel.events.value, { currentScreen = Screen.CalendarView }, { currentScreen = Screen.CalendarListView })
+                Screen.DailyCalendarView -> DailyCalendarView(viewModel, { currentScreen = Screen.CalendarView }, { currentScreen = Screen.CalendarListView })
                 Screen.CalendarView -> CalendarView(viewModel.events.value, { currentScreen = Screen.CalendarListView }, { currentScreen = Screen.DailyCalendarView })
             }
         }
@@ -168,6 +171,8 @@ fun MyApp(viewModel: MainViewModel) {
 
 // TODO: HASH DELETE
 //hash: hash
+
+// TODO: Optimize (I  Skipped 47 frames!  The application may be doing too much work on its main thread.)
 
 @Composable
 fun LoginView(
@@ -366,7 +371,8 @@ fun CalendarListView(
                     IconButton(onClick = onSwitchViewClicked) {
                         Icon(
                             imageVector = Icons.Filled.ViewDay,
-                            contentDescription = "Switch to Daily View"
+                            contentDescription = "Switch to Daily View",
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }
@@ -434,11 +440,14 @@ fun CalendarListView(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DailyCalendarView(
-    events: List<Event>,
+    viewModel: MainViewModel,
     onLogoutClicked: () -> Unit,
     onSwitchViewClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+
+    val events by viewModel.events.collectAsState()
+
     val hours = listOf(
         "7:45 - 9:15",
         "Pause",
@@ -456,63 +465,116 @@ fun DailyCalendarView(
     val eventsByDate = events.groupBy {
         Instant.ofEpochSecond(it.start.toLong()).atZone(ZoneId.systemDefault()).toLocalDate()
     }
-    println("Events by date: $eventsByDate")
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text("Tagesansicht: ", fontSize = 30.sp, fontWeight = FontWeight.Bold)
+            IconButton(onClick = {
+                println("Tagesansicht clicked")
+                onSwitchViewClicked()
+            }) {
+                Icon(
+                    imageVector = Icons.Filled.ViewAgenda,
+                    contentDescription = "Switch to List View",
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
+            }
+        }
 
-    IconButton(onClick = onSwitchViewClicked) {
-        Icon(
-            imageVector = Icons.Filled.ViewAgenda,
-            contentDescription = "Switch to List View"
-        )
-    }
+        println("Events by date: $eventsByDate")
 
-    val sortedDates = eventsByDate.keys.sorted()
-    val todayIndex = sortedDates.indexOf(LocalDate.now())
+        val sortedDates = eventsByDate.keys.sorted()
+        val todayIndex = sortedDates.indexOf(LocalDate.now())
 
-    val pagerState = rememberPagerState(pageCount = { eventsByDate.keys.size }, initialPage = todayIndex)
+        val pagerState =
+            rememberPagerState(pageCount = { eventsByDate.keys.size }, initialPage = todayIndex)
 
-    HorizontalPager(state = pagerState) { page ->
-        val date = eventsByDate.keys.sorted()[page]
-        val eventsForDate = eventsByDate[date] ?: emptyList()
+        HorizontalPager(
+            state = pagerState,
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(8.dp)
+        ) { page ->
+            val date = eventsByDate.keys.sorted()[page]
+            val eventsForDate = eventsByDate[date] ?: emptyList()
 
-        println("Events for date $date: $eventsForDate")
+            println("Events for date $date: $eventsForDate")
 
 
-        Column(modifier = modifier) {
-            Text(text = date.toString(), modifier = Modifier.padding(8.dp))
+            Column(modifier = modifier) {
+                val germanFormatter = DateTimeFormatter.ofPattern("EEEE, dd.MM.yyyy", Locale.GERMAN)
+                val germanDate = date.format(germanFormatter)
 
-            hours.forEach { hour ->
-                if (hour == "Pause") {
-                    Box(modifier = Modifier.fillMaxWidth().background(Color.Gray).height(20.dp)) {
-                        Text(text = "Pause", textAlign = TextAlign.Center)
-                    } 
-                } else {
-                    Row(modifier = Modifier.height(60.dp)) {
-                        Text(text = hour, modifier = Modifier.padding(start = 8.dp))
+                Text(
+                    text = germanDate,
+                    modifier = Modifier.padding(8.dp),
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
 
-                        // Display the events for the current hour
-                        val eventsForHour = eventsForDate.filter { event ->
-                            val eventStart = Instant.ofEpochSecond(event.start.toLong()).atZone(ZoneId.of("Europe/Berlin"))
-                            val eventEnd = Instant.ofEpochSecond(event.end.toLong()).atZone(ZoneId.of("Europe/Berlin"))
-
-                            val hourParts = hour.split(" - ")
-                            val hourStartStr = if (hourParts[0].length == 4) "0${hourParts[0]}" else hourParts[0]
-                            val hourEndStr = if (hourParts[1].length == 4) "0${hourParts[1]}" else hourParts[1]
-
-                            val hourStart = ZonedDateTime.of(date, LocalTime.parse(hourStartStr), ZoneId.of("Europe/Berlin"))
-                            val hourEnd = ZonedDateTime.of(date, LocalTime.parse(hourEndStr), ZoneId.of("Europe/Berlin"))
-
-                            (eventStart.isBefore(hourEnd) || eventStart.equals(hourStart)) && (eventEnd.isAfter(hourStart) || eventEnd.equals(hourStart))
+                hours.forEach { hour ->
+                    if (hour == "Pause") {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color.Gray)
+                                .height(20.dp)
+                        ) {
+                            Text(text = "Pause", textAlign = TextAlign.Center)
                         }
+                    } else {
+                        Row(modifier = Modifier.height(60.dp)) {
+                            Text(text = hour, modifier = Modifier.padding(start = 8.dp))
 
-                        println("Events for hour $hour: $eventsForHour") // Add this line
+                            // Display the events for the current hour
+                            val eventsForHour = eventsForDate.filter { event ->
+                                val eventStart = Instant.ofEpochSecond(event.start.toLong())
+                                    .atZone(ZoneId.of("Europe/Berlin"))
+                                val eventEnd = Instant.ofEpochSecond(event.end.toLong())
+                                    .atZone(ZoneId.of("Europe/Berlin"))
 
-                        Column(modifier = Modifier.weight(1f)) {
-                            eventsForHour.forEach { event ->
-                                // Generate a color based on the hash code of the title
-                                val color = Color(event.title.hashCode())
+                                val hourParts = hour.split(" - ")
+                                val hourStartStr =
+                                    if (hourParts[0].length == 4) "0${hourParts[0]}" else hourParts[0]
+                                val hourEndStr =
+                                    if (hourParts[1].length == 4) "0${hourParts[1]}" else hourParts[1]
 
-                                Box(modifier = Modifier.fillMaxWidth().background(color).padding(8.dp).weight(3f)) {
-                                    Text(text = event.title)
+                                val hourStart = ZonedDateTime.of(
+                                    date,
+                                    LocalTime.parse(hourStartStr),
+                                    ZoneId.of("Europe/Berlin")
+                                )
+                                val hourEnd = ZonedDateTime.of(
+                                    date,
+                                    LocalTime.parse(hourEndStr),
+                                    ZoneId.of("Europe/Berlin")
+                                )
+
+                                (eventStart.isBefore(hourEnd) || eventStart.equals(hourStart)) && (eventEnd.isAfter(
+                                    hourStart
+                                ) || eventEnd.equals(hourStart))
+                            }
+
+                            println("Events for hour $hour: $eventsForHour") // Add this line
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                eventsForHour.forEach { event ->
+                                    // Generate a color based on the hash code of the title
+                                    val color = Color(event.title.hashCode())
+
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .background(color)
+                                            .padding(8.dp)
+                                            .weight(3f)
+                                    ) {
+                                        Text(text = event.title)
+                                    }
                                 }
                             }
                         }
