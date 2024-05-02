@@ -216,40 +216,5 @@ fun MyApp(viewModel: MainViewModel) {
 
 // TODO: Optimize (I  Skipped 47 frames!  The application may be doing too much work on its main thread.)
 
-@Composable
-fun MarkdownText(markdownContent: String) {
-    val context = LocalContext.current
-    val markwon = remember {
-        Markwon.builder(context).build()
-    }
-    val markdown = remember(markdownContent) {
-        markwon.toMarkdown(markdownContent)
-    }
-
-    val textcolor = MaterialTheme.colorScheme.onSurface.toArgb()
-    AndroidView(
-        factory = { context ->
-            TextView(context).apply {
-                movementMethod = LinkMovementMethod.getInstance()
-                setTextColor(textcolor)
-            }
-        },
-        update = { view ->
-            markwon.setParsedMarkdown(view, markdown)
-        }
-    )
-}
-
-
-@Composable
-fun CurrentTimeIndicator(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .height(2.dp)
-            .fillMaxWidth()
-            .background(Color.Red)
-    )
-}
-
 
 
