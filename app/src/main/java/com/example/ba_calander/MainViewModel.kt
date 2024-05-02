@@ -25,6 +25,8 @@ import java.net.SocketTimeoutException
 import java.net.URL
 import java.security.cert.X509Certificate
 import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
@@ -52,6 +54,16 @@ class MainViewModel : ViewModel() {
 
     val loadingRefresh = MutableStateFlow(false)
 
+    fun findUpcomingOrCurrentEvent(events: List<Event>): Event? {
+        val now = Instant.now()
+
+        return events.find { event ->
+            val eventStartTime = Instant.ofEpochSecond(event.start.toLong())
+            val eventEndTime = Instant.ofEpochSecond(event.end.toLong())
+            eventStartTime.isBefore(now) && eventEndTime.isAfter(now)
+        }
+    }
+    
     // Function to fetch the personal calendar from the Campus Dual API using the user and hash
     fun getPersonalCalendar(user: String, hash: String) {
         val maxAttempts = 3
@@ -197,6 +209,12 @@ class MainViewModel : ViewModel() {
                 Toast.makeText(context, "Data has been updated", Toast.LENGTH_SHORT).show()
             }
             loadingRefresh.value = false
+
+            // Schedule a notification for each event
+            val upcomingOrCurrentEvent = findUpcomingOrCurrentEvent(events.value)
+            if (upcomingOrCurrentEvent != null) {
+                scheduleNotification(context, upcomingOrCurrentEvent)
+            }
         }
     }
 
