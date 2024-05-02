@@ -1,6 +1,13 @@
 package com.example.ba_calander
 
+import android.annotation.TargetApi
 import android.content.Context
+import android.net.Uri
+import android.os.Build
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -34,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
@@ -54,6 +62,7 @@ fun LoginView(
     val prefs = context.getSharedPreferences("MyApp", Context.MODE_PRIVATE)
     var showDialog by remember { mutableStateOf(false) }
     var markdownContent by remember { mutableStateOf("") }
+    val (showWebView, setShowWebView) = remember { mutableStateOf(false) }
 
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         OutlinedCard(
@@ -144,6 +153,10 @@ fun LoginView(
                     Text("Kalender Anzeigen")
                 }
 
+                Button(onClick = { setShowWebView(true) }) {
+                    Text("Open WebView")
+                }
+
                 if (showDialog) {
                     AlertDialog(
                         onDismissRequest = { showDialog = false },
@@ -157,5 +170,74 @@ fun LoginView(
                 }
             }
         }
+
+        if (showWebView) {
+            WebViewScreen(
+                url = "https://erp.campus-dual.de/sap/bc/webdynpro/sap/zba_initss?sap-client=100&sap-language=de&uri=https://selfservice.campus-dual.de/index/login",
+                onDone = { hash: String, matrikelnummer: String ->
+                    // Save the hash and Matrikelnummer to SharedPreferences
+                    val preferences = context.getSharedPreferences("MyPreferences", Context.MODE_PRIVATE)
+                    with(preferences.edit()) {
+                        putString("hash", hash)
+                        putString("matrikelnummer", matrikelnummer)
+                        apply()
+                    }
+
+                    // Then hide the WebView
+                    setShowWebView(false)
+                }
+            )
+        }
+
     }
+}
+
+@Composable
+fun WebViewScreen(url: String, onDone: (String, String) -> Unit) {
+    AndroidView(factory = { context ->
+        WebView(context).apply {
+            webViewClient = object : WebViewClient() {
+                override fun onPageFinished(view: WebView, url: String) {
+                    // This method is called when the page loading is finished
+                    // You can get the session data here
+                }
+
+                @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+                override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
+                    // This method is called each time the WebView is about to make a request
+                    // You can inspect the request, modify it, or return a response
+
+                    val url = request.url.toString()
+                    if (url.startsWith("https://selfservice.campus-dual.de/room/json")) {
+                        // This is the API request we're interested in
+                        // Extract the hash and Matrikelnummer from the request
+                        val hash = extractHashFromRequest(request)
+                        val matrikelnummer = extractMatrikelnummerFromRequest(request)
+
+                        // Pass the hash and Matrikelnummer to the onDone function
+                        onDone(hash, matrikelnummer)
+                    }
+
+                    // Return null to let the WebView continue with the request
+                    return null
+                }
+            }
+            settings.javaScriptEnabled = true
+            loadUrl(url)
+        }
+    },
+        modifier = Modifier.fillMaxSize()
+    )
+}
+
+fun extractHashFromRequest(request: WebResourceRequest): String {
+    val url = request.url.toString()
+    val uri = Uri.parse(url)
+    return uri.getQueryParameter("hash") ?: ""
+}
+
+fun extractMatrikelnummerFromRequest(request: WebResourceRequest): String {
+    val url = request.url.toString()
+    val uri = Uri.parse(url)
+    return uri.getQueryParameter("matrikelnummer") ?: ""
 }
