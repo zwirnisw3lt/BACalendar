@@ -23,6 +23,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -34,6 +35,7 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlin.math.max
 
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -170,7 +172,7 @@ fun DailyCalendarView(
                                 Column(modifier = Modifier.weight(1f)) {
                                     eventsForHour.forEach { event ->
                                         // Generate a color based on the hash code of the title
-                                        val color = Color(event.title.hashCode())
+                                        val color = adjustColor( Color(event.title.hashCode()))
 
                                         Box(
                                             modifier = Modifier
@@ -190,4 +192,12 @@ fun DailyCalendarView(
             }
         }
     }
+}
+
+fun adjustColor(color: Color): Color {
+    val hsv = FloatArray(3)
+    android.graphics.Color.colorToHSV(color.toArgb(), hsv)
+    hsv[1] = max(hsv[1], 0.2f) // Ensure minimum saturation
+    hsv[2] = max(hsv[2], 0.2f) // Ensure minimum brightness
+    return Color(android.graphics.Color.HSVToColor(hsv))
 }
