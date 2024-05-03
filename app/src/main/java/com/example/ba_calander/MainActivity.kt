@@ -83,8 +83,8 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-fun loadMarkdownContent(context: Context): String {
-    val inputStream = context.assets.open("hash_help.md")
+fun loadMarkdownContent(context: Context, filename: String): String {
+    val inputStream = context.assets.open("$filename.md")
     return inputStream.bufferedReader().use { it.readText() }
 }
 

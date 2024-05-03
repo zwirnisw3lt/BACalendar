@@ -4,6 +4,8 @@ import android.annotation.TargetApi
 import android.content.Context
 import android.net.Uri
 import android.os.Build
+import android.util.Log
+import android.view.View
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
@@ -24,6 +26,7 @@ import androidx.compose.material.IconButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Web
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
@@ -64,7 +67,7 @@ fun LoginView(
     var markdownContent by remember { mutableStateOf("") }
     val (showWebView, setShowWebView) = remember { mutableStateOf(false) }
 
-    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    Column(modifier = modifier.fillMaxSize()) {
         OutlinedCard(
             modifier = Modifier.padding(16.dp),
             shape = RoundedCornerShape(16.dp),
@@ -83,7 +86,7 @@ fun LoginView(
                     )
                     IconButton(
                         onClick = {
-                            markdownContent = loadMarkdownContent(context)
+                            markdownContent = loadMarkdownContent(context, "hash_help")
                             showDialog = true
                         },
                         modifier = Modifier.weight(0.1f) // allocate 10% of the width to the IconButton
@@ -153,9 +156,6 @@ fun LoginView(
                     Text("Kalender Anzeigen")
                 }
 
-                Button(onClick = { setShowWebView(true) }) {
-                    Text("Open WebView")
-                }
 
                 if (showDialog) {
                     AlertDialog(
@@ -167,6 +167,42 @@ fun LoginView(
                             }
                         }
                     )
+                }
+            }
+        }
+
+        OutlinedCard(
+            modifier = Modifier.padding(16.dp),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        "Anmelden über Campusdual",
+                        style = MaterialTheme.typography.headlineMedium,
+                        modifier = Modifier.weight(0.9f) // allocate 90% of the width to the Text
+                    )
+                    IconButton(
+                        onClick = {
+                            markdownContent = loadMarkdownContent(context, "webview_info")
+                            showDialog = true
+                        },
+                        modifier = Modifier.weight(0.1f) // allocate 10% of the width to the IconButton
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.HelpOutline, contentDescription = "Help Icon", tint = MaterialTheme.colorScheme.onSurface)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Button(onClick = { setShowWebView(true) }) {
+                    Icon(Icons.Filled.Web, contentDescription = "WebView Icon", tint = MaterialTheme.colorScheme.onSurface)
+                    Spacer(Modifier.width(8.dp)) // Add some space between the icon and the text
+                    Text("Open WebView")
                 }
             }
         }
@@ -196,29 +232,31 @@ fun LoginView(
 fun WebViewScreen(url: String, onDone: (String, String) -> Unit) {
     AndroidView(factory = { context ->
         WebView(context).apply {
+            visibility = View.INVISIBLE // Make the WebView invisible
             webViewClient = object : WebViewClient() {
-                override fun onPageFinished(view: WebView, url: String) {
-                    // This method is called when the page loading is finished
-                    // You can get the session data here
+                override fun shouldOverrideUrlLoading(view: WebView, url: String): Boolean {
+                    view.loadUrl(url)
+
+                    // Check if the user has logged in
+                    if (url.startsWith("https://selfservice.campus-dual.de/index/login")) {
+                        // The user has logged in, hide the WebView
+                        view.visibility = View.GONE
+
+                        // Extract the hash and Matrikelnummer from the URL
+                        val hash = extractHashFromUrl(url)
+                        val matrikelnummer = extractMatrikelnummerFromUrl(url)
+
+                        // Pass the hash and Matrikelnummer to the onDone function
+                        onDone(hash, matrikelnummer)
+                    }
+
+                    return true
                 }
 
                 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
                 override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
                     // This method is called each time the WebView is about to make a request
                     // You can inspect the request, modify it, or return a response
-
-                    val url = request.url.toString()
-                    if (url.startsWith("https://selfservice.campus-dual.de/room/json")) {
-                        // This is the API request we're interested in
-                        // Extract the hash and Matrikelnummer from the request
-                        val hash = extractHashFromRequest(request)
-                        val matrikelnummer = extractMatrikelnummerFromRequest(request)
-
-                        // Pass the hash and Matrikelnummer to the onDone function
-                        onDone(hash, matrikelnummer)
-                    }
-
-                    // Return null to let the WebView continue with the request
                     return null
                 }
             }
@@ -230,14 +268,12 @@ fun WebViewScreen(url: String, onDone: (String, String) -> Unit) {
     )
 }
 
-fun extractHashFromRequest(request: WebResourceRequest): String {
-    val url = request.url.toString()
+fun extractHashFromUrl(url: String): String {
     val uri = Uri.parse(url)
     return uri.getQueryParameter("hash") ?: ""
 }
 
-fun extractMatrikelnummerFromRequest(request: WebResourceRequest): String {
-    val url = request.url.toString()
+fun extractMatrikelnummerFromUrl(url: String): String {
     val uri = Uri.parse(url)
     return uri.getQueryParameter("matrikelnummer") ?: ""
 }
