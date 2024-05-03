@@ -43,7 +43,7 @@ data class Event(
     val instructor: String,
     val allDay: Boolean
 )
-
+// TODO: Translate all the strings to German
 class MainViewModel : ViewModel() {
     private val _events = MutableStateFlow<List<Event>>(listOf())
     val events: StateFlow<List<Event>> = _events
@@ -191,6 +191,7 @@ class MainViewModel : ViewModel() {
 
     // Function to update the events
     fun updateEvents(pref: SharedPreferences, context: Context) {
+        // TODO: Check for internet connection
         viewModelScope.launch(Dispatchers.IO) {
             loadingRefresh.value = true
             getPersonalCalendar(pref.getString("user", "")!!, pref.getString("hash", "")!!)
