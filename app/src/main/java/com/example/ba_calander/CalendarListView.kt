@@ -112,6 +112,18 @@ fun CalendarListView(
                         .size(200.dp) // Adjust this to change the size of the logo
                         .clip(CircleShape)
                 )
+                Column(
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                    verticalArrangement = Arrangement.Bottom
+                ) {
+                    Text(
+                        text = "Kalendar wird geladen!",
+                        fontSize = 30.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
             }
         } else {
             SwipeRefresh(
