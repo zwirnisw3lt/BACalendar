@@ -102,6 +102,7 @@ fun MyApp(viewModel: MainViewModel) {
     BacalanderTheme {
         ModalNavigationDrawer(
             drawerState = drawerState,
+            gesturesEnabled = currentScreen != Screen.LoginView, // Disable gestures when the login screen is shown
             drawerContent = {
                 Column(
                     modifier = Modifier
