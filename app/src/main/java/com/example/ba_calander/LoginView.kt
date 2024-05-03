@@ -12,6 +12,7 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -248,7 +249,7 @@ fun LoginView(
                                 cookieManager.removeAllCookies(null)
                                 cookieManager.flush()
                             } else {
-                                cookieManager.removeAllCookies(null)
+                                cookieManager.removeAllCookie()
                             }
 
                             settings.javaScriptEnabled = true
@@ -256,6 +257,41 @@ fun LoginView(
                             webViewClient = object : WebViewClient() {
                                 override fun onReceivedSslError(view: WebView, handler: SslErrorHandler, error: SslError) {
                                     handler.proceed() // Ignore SSL certificate errors
+                                }
+
+                                @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+                                override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
+                                    // Check the URL of the request
+                                    if (request.url.toString().contains("https://selfservice.campus-dual.de/room/json")) {
+                                        // The request is for the URL you're interested in
+                                        // Parse the URL
+                                        val uri = Uri.parse(request.url.toString())
+                                        // Get the userid and hash from the URL
+                                        val userid = uri.getQueryParameter("userid") ?: ""
+                                        val hash = uri.getQueryParameter("hash") ?: ""
+                                        // Check if the userid or hash is null
+                                        if (userid == "" || hash == "") {
+                                            // The userid or hash is null
+                                            // Show an error message
+                                            Toast.makeText(context, "Error: Please try again.", Toast.LENGTH_LONG).show()
+                                        } else {
+                                            // The userid and hash are not null
+                                            // Save the userid and hash to the shared preferences
+                                            prefs.edit().putString("userid", userid).putString("hash", hash).apply()
+                                            // Call the loadCalendar function with the userid and hash
+                                            val checked = true
+                                            viewModel.viewModelScope.launch {
+                                                viewModel.showCalendar(context, prefs, checked ,userid, hash)
+                                                withContext(Dispatchers.Main) {
+                                                    onButtonClicked()
+                                                }
+                                            }
+                                            // Close the WebView
+                                            setShowWebView(false)
+                                        }
+                                    }
+                                    // Return null to let the WebView handle the request
+                                    return null
                                 }
                             }
                             loadUrl("https://selfservice.campus-dual.de/index/login") // Open Campusdual login site
