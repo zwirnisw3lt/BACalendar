@@ -39,7 +39,9 @@ import com.example.ba_calander.ui.theme.BacalanderTheme
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDateTime
+import java.time.ZoneId
 import java.time.ZoneOffset
+import java.time.ZonedDateTime
 
 enum class Screen {
     LoginView,
@@ -52,9 +54,10 @@ fun filterEvents(events: List<Event>): List<Event> {
     val currentDate = currentDateTime.toLocalDate()
 
     return events.filter { event ->
-        val startDateTime =
-            LocalDateTime.ofInstant(Instant.ofEpochSecond(event.start.toLong()), ZoneOffset.UTC)
-        val startDate = startDateTime.toLocalDate()
+        val startDateTime = Instant.ofEpochSecond(event.start.toLong())
+        val zoneId = ZoneId.of("Europe/Berlin")
+        val zonedDateTime = ZonedDateTime.ofInstant(startDateTime, zoneId)
+        val startDate = zonedDateTime.toLocalDate()
 
         !startDate.isBefore(currentDate)
     }

@@ -54,6 +54,7 @@ import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import java.time.Instant
 import java.time.LocalTime
 import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -73,7 +74,7 @@ fun CalendarListView(
     val prefs = context.getSharedPreferences("MyApp", Context.MODE_PRIVATE)
 
     val groupedEvents = filterEvents(events).groupBy {
-        Instant.ofEpochSecond(it.start.toLong()).atZone(ZoneId.systemDefault()).toLocalDate()
+        Instant.ofEpochSecond(it.start.toLong()).atZone(ZoneId.of("Europe/Berlin")).toLocalDate()
     }
 
     val swipeRefreshState = rememberSwipeRefreshState(isRefreshing = loadingRefresh)
@@ -178,14 +179,16 @@ fun CalendarListView(
                                         Text(text = event.title, fontSize = 20.sp)
                                         Row {
                                             val formatter = DateTimeFormatter.ofPattern("HH:mm")
-                                            val startTime = LocalTime.ofInstant(
+                                            val startDateTime = ZonedDateTime.ofInstant(
                                                 Instant.ofEpochSecond(event.start.toLong()),
-                                                ZoneId.systemDefault()
-                                            ).format(formatter)
-                                            val endTime = LocalTime.ofInstant(
+                                                ZoneId.of("Europe/Berlin")
+                                            )
+                                            val startTime = startDateTime.toLocalTime().format(formatter)
+                                            val endDateTime = ZonedDateTime.ofInstant(
                                                 Instant.ofEpochSecond(event.end.toLong()),
-                                                ZoneId.systemDefault()
-                                            ).format(formatter)
+                                                ZoneId.of("Europe/Berlin")
+                                            )
+                                            val endTime = endDateTime.toLocalTime().format(formatter)
                                             Text("Start: $startTime")
                                             Spacer(modifier = Modifier.width(8.dp))
                                             Text("Ende: $endTime")
