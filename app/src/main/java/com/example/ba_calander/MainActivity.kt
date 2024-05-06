@@ -173,7 +173,4 @@ fun MyApp(viewModel: MainViewModel) {
     }
 }
 
-// TODO: HASH DELETE
-//hash: hash
-
 // TODO: Optimize (I  Skipped 47 frames!  The application may be doing too much work on its main thread.)

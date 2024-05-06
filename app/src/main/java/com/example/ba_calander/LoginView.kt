@@ -62,8 +62,8 @@ fun LoginView(
     onSwitchViewClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val (text1, setText1) = remember { mutableStateOf("number") }
-    val (text2, setText2) = remember { mutableStateOf("hash") }
+    val (text1, setText1) = remember { mutableStateOf("") }
+    val (text2, setText2) = remember { mutableStateOf("") }
     val (checked, setChecked) = remember { mutableStateOf(false) }
     val context = LocalContext.current
     val prefs = context.getSharedPreferences("MyApp", Context.MODE_PRIVATE)
