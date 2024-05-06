@@ -297,6 +297,11 @@ fun LoginView(
                             loadUrl("https://selfservice.campus-dual.de/index/login") // Open Campusdual login site
                         }
                     },
+                    update = { webView ->
+                        if (!showWebView) {
+                            webView.destroy()
+                        }
+                    },
                     modifier = Modifier.fillMaxSize()
                 )
 
