@@ -3,6 +3,8 @@ package com.example.ba_calander
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -66,10 +68,17 @@ fun filterEvents(events: List<Event>): List<Event> {
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
 
+    fun isNetworkAvailable(context: Context): Boolean {
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = connectivityManager.activeNetwork ?: return false
+        val networkCapabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        return networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MyApp(viewModel)
+            MyApp(viewModel, this@MainActivity)
         }
         // TODO: Change Status Bar Color
     }
@@ -92,7 +101,7 @@ fun loadMarkdownContent(context: Context, filename: String): String {
 }
 
 @Composable
-fun MyApp(viewModel: MainViewModel) {
+fun MyApp(viewModel: MainViewModel, mainActivity: MainActivity) {
     val context = LocalContext.current
     val prefs = context.getSharedPreferences("MyApp", Context.MODE_PRIVATE)
     val user = prefs.getString("user", null)
@@ -157,13 +166,15 @@ fun MyApp(viewModel: MainViewModel) {
                         Screen.LoginView -> LoginView(
                             viewModel,
                             { currentScreen = Screen.CalendarListView },
-                            { currentScreen = Screen.DailyCalendarView })
+                            { currentScreen = Screen.DailyCalendarView },
+                            mainActivity::isNetworkAvailable)
 
                         Screen.CalendarListView -> CalendarListView(
                             viewModel,
                             context,
                             { currentScreen = Screen.LoginView },
-                            { currentScreen = Screen.DailyCalendarView })
+                            { currentScreen = Screen.DailyCalendarView },
+                            mainActivity::isNetworkAvailable)
 
                         Screen.DailyCalendarView -> DailyCalendarView(
                             viewModel,

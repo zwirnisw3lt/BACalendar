@@ -46,7 +46,6 @@ fun DailyCalendarView(
     onSwitchViewClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-
     val events by viewModel.events.collectAsState()
 
     val hours = listOf(
@@ -66,6 +65,7 @@ fun DailyCalendarView(
     val eventsByDate = events.groupBy {
         Instant.ofEpochSecond(it.start.toLong()).atZone(ZoneId.systemDefault()).toLocalDate()
     }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -109,9 +109,6 @@ fun DailyCalendarView(
                 val date = eventsByDate.keys.sorted()[page]
                 val eventsForDate = eventsByDate[date] ?: emptyList()
 
-                println("Events for date $date: $eventsForDate")
-
-
                 Column(modifier = modifier) {
                     val germanFormatter =
                         DateTimeFormatter.ofPattern("EEEE, dd.MM.yyyy", Locale.GERMAN)
@@ -135,51 +132,59 @@ fun DailyCalendarView(
                                 Text(text = "Pause", textAlign = TextAlign.Center)
                             }
                         } else {
-                            Row(modifier = Modifier.height(60.dp)) {
-                                Text(text = hour, modifier = Modifier.padding(start = 8.dp))
+                            // Display the events for the current hour
+                            val eventsForHour = eventsForDate.filter { event ->
+                                val eventStart = Instant.ofEpochSecond(event.start.toLong())
+                                    .atZone(ZoneId.of("Europe/Berlin"))
+                                val eventEnd = Instant.ofEpochSecond(event.end.toLong())
+                                    .atZone(ZoneId.of("Europe/Berlin"))
 
-                                // Display the events for the current hour
-                                val eventsForHour = eventsForDate.filter { event ->
-                                    val eventStart = Instant.ofEpochSecond(event.start.toLong())
-                                        .atZone(ZoneId.of("Europe/Berlin"))
-                                    val eventEnd = Instant.ofEpochSecond(event.end.toLong())
-                                        .atZone(ZoneId.of("Europe/Berlin"))
+                                val hourParts = hour.split(" - ")
+                                val hourStartStr =
+                                    if (hourParts[0].length == 4) "0${hourParts[0]}" else hourParts[0]
+                                val hourEndStr =
+                                    if (hourParts[1].length == 4) "0${hourParts[1]}" else hourParts[1]
 
-                                    val hourParts = hour.split(" - ")
-                                    val hourStartStr =
-                                        if (hourParts[0].length == 4) "0${hourParts[0]}" else hourParts[0]
-                                    val hourEndStr =
-                                        if (hourParts[1].length == 4) "0${hourParts[1]}" else hourParts[1]
+                                val hourStart = ZonedDateTime.of(
+                                    date,
+                                    LocalTime.parse(hourStartStr),
+                                    ZoneId.of("Europe/Berlin")
+                                )
+                                val hourEnd = ZonedDateTime.of(
+                                    date,
+                                    LocalTime.parse(hourEndStr),
+                                    ZoneId.of("Europe/Berlin")
+                                )
 
-                                    val hourStart = ZonedDateTime.of(
-                                        date,
-                                        LocalTime.parse(hourStartStr),
-                                        ZoneId.of("Europe/Berlin")
-                                    )
-                                    val hourEnd = ZonedDateTime.of(
-                                        date,
-                                        LocalTime.parse(hourEndStr),
-                                        ZoneId.of("Europe/Berlin")
-                                    )
+                                (eventStart.isBefore(hourEnd) || eventStart.equals(hourStart)) && (eventEnd.isAfter(
+                                    hourStart
+                                ) || eventEnd.equals(hourStart))
+                            }
 
-                                    (eventStart.isBefore(hourEnd) || eventStart.equals(hourStart)) && (eventEnd.isAfter(
-                                        hourStart
-                                    ) || eventEnd.equals(hourStart))
-                                }
+                            // Calculate the number of events for the current hour
+                            val numEvents = eventsForHour.size
 
-                                println("Events for hour $hour: $eventsForHour") // Add this line
+                            // Calculate the height of the row based on the number of events
+                            val rowHeight = 60.dp * numEvents
 
-                                Column(modifier = Modifier.weight(1f)) {
+                            Row(modifier = Modifier.height(rowHeight)) {
+                                val hourParts = hour.split(" - ")
+                                Text(
+                                    text = "${hourParts[0]}-\n${hourParts[1]}",
+                                    modifier = Modifier
+                                        .padding(start = 8.dp)
+                                        .weight(1f) // This will take 1 fraction of available space
+                                )
+
+                                Column(modifier = Modifier.weight(3f)) { // This will take 3 fractions of available space
                                     eventsForHour.forEach { event ->
-                                        // Generate a color based on the hash code of the title
-                                        val color = adjustColor( Color(event.title.hashCode()))
+                                        val color = adjustColor(Color(event.title.hashCode()))
 
                                         Box(
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .background(color)
                                                 .padding(8.dp)
-                                                .weight(3f)
                                         ) {
                                             Text(text = event.title)
                                         }

@@ -2,6 +2,7 @@ package com.example.ba_calander
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.widget.Toast
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -65,6 +66,7 @@ fun CalendarListView(
     context: Context,
     onLogoutClicked: () -> Unit,
     onSwitchViewClicked: () -> Unit,
+    isNetworkAvailable: (Context) -> Boolean,
     modifier: Modifier = Modifier
 ) {
     val loading by viewModel.loading.collectAsState()
@@ -129,7 +131,13 @@ fun CalendarListView(
         } else {
             SwipeRefresh(
                 state = swipeRefreshState,
-                onRefresh = { viewModel.updateEvents(prefs, context) }
+                onRefresh = { 
+                    if (isNetworkAvailable(context)) {
+                        viewModel.updateEvents(prefs, context) 
+                    } else {
+                        Toast.makeText(context, "Refresh failed. No internet connection.", Toast.LENGTH_LONG).show()
+                    }
+                }
             ) {
                 LazyColumn(horizontalAlignment = Alignment.CenterHorizontally) {
                     item {

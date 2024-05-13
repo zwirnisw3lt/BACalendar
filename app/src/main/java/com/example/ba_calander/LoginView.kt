@@ -5,7 +5,6 @@ import android.content.Context
 import android.net.Uri
 import android.net.http.SslError
 import android.os.Build
-import android.util.Log
 import android.view.View
 import android.webkit.SslErrorHandler
 import android.webkit.WebResourceRequest
@@ -54,12 +53,14 @@ import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.reflect.KFunction1
 
 @Composable
 fun LoginView(
     viewModel: MainViewModel,
     onButtonClicked: () -> Unit,
     onSwitchViewClicked: () -> Unit,
+    isNetworkAvailable: (Context) -> Boolean,
     modifier: Modifier = Modifier
 ) {
     val (text1, setText1) = remember { mutableStateOf("") }
@@ -148,13 +149,21 @@ fun LoginView(
 
                     Button(
                         onClick = {
-                            viewModel.viewModelScope.launch {
-                                viewModel.showCalendar(context, prefs, checked, text1, text2)
-                                val eventsJson = Gson().toJson(viewModel.events.value)
-                                prefs.edit().putString("events", eventsJson).commit()
-                                withContext(Dispatchers.Main) {
-                                    onButtonClicked()
+                            if (isNetworkAvailable(context)) {
+                                viewModel.viewModelScope.launch {
+                                    viewModel.showCalendar(context, prefs, checked, text1, text2)
+                                    val eventsJson = Gson().toJson(viewModel.events.value)
+                                    prefs.edit().putString("events", eventsJson).commit()
+                                    withContext(Dispatchers.Main) {
+                                        onButtonClicked()
+                                    }
                                 }
+                            } else {
+                                Toast.makeText(
+                                    context,
+                                    "Login failed. No internet connection.",
+                                    Toast.LENGTH_LONG
+                                ).show()
                             }
                         },
                         modifier = Modifier.fillMaxWidth(0.8f)
@@ -219,7 +228,15 @@ fun LoginView(
                     Spacer(modifier = Modifier.height(24.dp))
 
                     Button(onClick = {
-                        setShowWebView(true)
+                        if (isNetworkAvailable(context)) {
+                            setShowWebView(true)
+                        } else {
+                            Toast.makeText(
+                                context,
+                                "Cannot open WebView. No internet connection.",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
                     }) {
                         Icon(
                             Icons.Filled.Web,
@@ -255,14 +272,23 @@ fun LoginView(
                             settings.javaScriptEnabled = true
                             settings.domStorageEnabled = true
                             webViewClient = object : WebViewClient() {
-                                override fun onReceivedSslError(view: WebView, handler: SslErrorHandler, error: SslError) {
+                                override fun onReceivedSslError(
+                                    view: WebView,
+                                    handler: SslErrorHandler,
+                                    error: SslError
+                                ) {
                                     handler.proceed() // Ignore SSL certificate errors
                                 }
 
                                 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-                                override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
+                                override fun shouldInterceptRequest(
+                                    view: WebView,
+                                    request: WebResourceRequest
+                                ): WebResourceResponse? {
                                     // Check the URL of the request
-                                    if (request.url.toString().contains("https://selfservice.campus-dual.de/room/json")) {
+                                    if (request.url.toString()
+                                            .contains("https://selfservice.campus-dual.de/room/json")
+                                    ) {
                                         // The request is for the URL you're interested in
                                         // Parse the URL
                                         val uri = Uri.parse(request.url.toString())
@@ -273,15 +299,26 @@ fun LoginView(
                                         if (userid == "" || hash == "") {
                                             // The userid or hash is null
                                             // Show an error message
-                                            Toast.makeText(context, "Error: Please try again.", Toast.LENGTH_LONG).show()
+                                            Toast.makeText(
+                                                context,
+                                                "Error: Please try again.",
+                                                Toast.LENGTH_LONG
+                                            ).show()
                                         } else {
                                             // The userid and hash are not null
                                             // Save the userid and hash to the shared preferences
-                                            prefs.edit().putString("userid", userid).putString("hash", hash).apply()
+                                            prefs.edit().putString("userid", userid)
+                                                .putString("hash", hash).apply()
                                             // Call the loadCalendar function with the userid and hash
                                             val checked = true
                                             viewModel.viewModelScope.launch {
-                                                viewModel.showCalendar(context, prefs, checked ,userid, hash)
+                                                viewModel.showCalendar(
+                                                    context,
+                                                    prefs,
+                                                    checked,
+                                                    userid,
+                                                    hash
+                                                )
                                                 withContext(Dispatchers.Main) {
                                                     onButtonClicked()
                                                 }
