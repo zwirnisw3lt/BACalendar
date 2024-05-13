@@ -12,6 +12,7 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -45,8 +46,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
@@ -72,8 +75,39 @@ fun LoginView(
     var markdownContent by remember { mutableStateOf("") }
     val (showWebView, setShowWebView) = remember { mutableStateOf(false) }
 
-    Box(modifier = modifier.fillMaxSize()) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(20.dp)
+    ) {
         Column {
+            Column {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        "Berufsakademie Kalender",
+                        fontSize = 30.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(0.9f) // allocate 90% of the width to the Text
+                    )
+                    IconButton(
+                        onClick = {
+                            markdownContent = loadMarkdownContent(context, "app_info")
+                            showDialog = true
+                        },
+                        modifier = Modifier.weight(0.1f) // allocate 10% of the width to the IconButton
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.HelpOutline,
+                            contentDescription = "Help Icon",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
+            
             OutlinedCard(
                 modifier = Modifier.padding(16.dp),
                 shape = RoundedCornerShape(16.dp),
@@ -89,7 +123,7 @@ fun LoginView(
                             .padding(16.dp)
                     ) {
                         Text(
-                            "Berufsakademie Kalender",
+                            "Anmelden über Matrikelnummer und Hash",
                             style = MaterialTheme.typography.headlineMedium,
                             modifier = Modifier.weight(0.9f) // allocate 90% of the width to the Text
                         )
@@ -142,7 +176,7 @@ fun LoginView(
                             checked = checked,
                             onCheckedChange = setChecked,
                         )
-                        Text("Daten Speichern")
+                        Text("Daten sollen gespeichert werden.")
                     }
 
                     Spacer(modifier = Modifier.height(24.dp))
@@ -161,7 +195,7 @@ fun LoginView(
                             } else {
                                 Toast.makeText(
                                     context,
-                                    "Login failed. No internet connection.",
+                                    "Login fehlgeschlagen. Keine Internetverbindung.",
                                     Toast.LENGTH_LONG
                                 ).show()
                             }
@@ -184,7 +218,7 @@ fun LoginView(
                             text = { MarkdownText(markdownContent) },
                             confirmButton = {
                                 Button(onClick = { showDialog = false }) {
-                                    Text("Close")
+                                    Text("Schließen")
                                 }
                             }
                         )
@@ -233,7 +267,7 @@ fun LoginView(
                         } else {
                             Toast.makeText(
                                 context,
-                                "Cannot open WebView. No internet connection.",
+                                "Kann kein Browserfenster öffnen. Keine Internetverbindung.",
                                 Toast.LENGTH_LONG
                             ).show()
                         }
@@ -244,7 +278,7 @@ fun LoginView(
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(Modifier.width(8.dp)) // Add some space between the icon and the text
-                        Text("Open WebView")
+                        Text("Browserfenster öffnen")
                     }
                 }
             }
@@ -301,7 +335,7 @@ fun LoginView(
                                             // Show an error message
                                             Toast.makeText(
                                                 context,
-                                                "Error: Please try again.",
+                                                "Error: Bitte erneut versuchen.",
                                                 Toast.LENGTH_LONG
                                             ).show()
                                         } else {
@@ -352,7 +386,7 @@ fun LoginView(
                         tint = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(Modifier.width(8.dp)) // Add some space between the icon and the text
-                    Text("Quit")
+                    Text("Verlassen")
                 }
             }
         }

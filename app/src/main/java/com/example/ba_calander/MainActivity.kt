@@ -134,7 +134,7 @@ fun MyApp(viewModel: MainViewModel, mainActivity: MainActivity) {
                             Icons.AutoMirrored.Filled.Logout,
                             contentDescription = "Logout Icon"
                         ) // Add an icon
-                        Text("Logout")
+                        Text("Ausloggen")
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(onClick = {
@@ -147,7 +147,7 @@ fun MyApp(viewModel: MainViewModel, mainActivity: MainActivity) {
                             Icons.Filled.Download,
                             contentDescription = "Download Icon"
                         ) // Add an icon
-                        Text("Download as .ics")
+                        Text("Download als .ics Datei")
                     }
                 }
             },

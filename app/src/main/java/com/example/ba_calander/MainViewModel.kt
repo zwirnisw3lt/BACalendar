@@ -198,7 +198,7 @@ class MainViewModel : ViewModel() {
             loadingRefresh.value = true
             getPersonalCalendar(pref.getString("user", "")!!, pref.getString("hash", "")!!)
             withContext(Dispatchers.Main) {
-                Toast.makeText(context, "Data has been updated", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Termine wurden aktualisiert", Toast.LENGTH_SHORT).show()
             }
             loadingRefresh.value = false
         }
