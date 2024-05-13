@@ -92,8 +92,6 @@ fun DailyCalendarView(
                 }
             }
 
-            println("Events by date: $eventsByDate")
-
             val sortedDates = eventsByDate.keys.sorted()
             val todayIndex = sortedDates.indexOf(LocalDate.now())
 

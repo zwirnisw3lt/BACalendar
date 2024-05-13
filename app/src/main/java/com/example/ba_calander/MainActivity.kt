@@ -38,7 +38,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.ba_calander.MainViewModel.Companion.REQUEST_CODE_SAVE_FILE
 import com.example.ba_calander.ui.theme.BacalanderTheme
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -157,9 +159,11 @@ fun MyApp(viewModel: MainViewModel, mainActivity: MainActivity) {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     LaunchedEffect(Unit) {
-                        viewModel.loadEvents(prefs)
-                        if (user != null && hash != null) {
-                            viewModel.updateEvents(prefs, context)
+                        withContext(Dispatchers.IO) {
+                            viewModel.loadEvents(prefs)
+                            if (user != null && hash != null) {
+                                viewModel.updateEvents(prefs, context)
+                            }
                         }
                     }
                     when (currentScreen) {
