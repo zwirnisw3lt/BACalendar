@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import com.example.ba_calander.MainViewModel.Companion.REQUEST_CODE_SAVE_FILE
 import com.example.ba_calander.ui.theme.BacalanderTheme
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.observeOn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.Instant
@@ -166,6 +167,7 @@ fun MyApp(viewModel: MainViewModel, mainActivity: MainActivity) {
                             }
                         }
                     }
+
                     when (currentScreen) {
                         Screen.LoginView -> LoginView(
                             viewModel,

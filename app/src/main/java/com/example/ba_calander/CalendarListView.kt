@@ -120,7 +120,7 @@ fun CalendarListView(
                     verticalArrangement = Arrangement.Bottom
                 ) {
                     Text(
-                        text = "Kalendar wird geladen!",
+                        text = "Kalender wird geladen!",
                         fontSize = 30.sp,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
@@ -135,7 +135,7 @@ fun CalendarListView(
                     if (isNetworkAvailable(context)) {
                         viewModel.updateEvents(prefs, context) 
                     } else {
-                        Toast.makeText(context, "Refresh failed. No internet connection.", Toast.LENGTH_LONG).show()
+                        Toast.makeText(context, "Aktualisieren fehlgeschlagen. Keine Internetverbindung!.", Toast.LENGTH_LONG).show()
                     }
                 }
             ) {

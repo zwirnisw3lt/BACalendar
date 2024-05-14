@@ -119,15 +119,27 @@ fun DailyCalendarView(
                         fontWeight = FontWeight.Bold
                     )
 
-                    hours.forEach { hour ->
+                    val hoursWithEvents = mutableListOf<String>()
+                    hours.forEachIndexed { index, hour ->
+                        if (hour == "Pause" && index != hours.lastIndex - 1) {
+                            hoursWithEvents.add(hour)
+                        } else if (hour != "Pause") {
+                            hoursWithEvents.add(hour)
+                        }
+                    }
+
+                    hoursWithEvents.forEachIndexed { index, hour ->
                         if (hour == "Pause") {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(Color.Gray)
-                                    .height(20.dp)
-                            ) {
-                                Text(text = "Pause", textAlign = TextAlign.Center)
+                            // Check if the current hour is not the last in the list
+                            if (index != hours.lastIndex) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(Color.Gray)
+                                        .height(20.dp)
+                                ) {
+                                    Text(text = "Pause", textAlign = TextAlign.Center)
+                                }
                             }
                         } else {
                             // Display the events for the current hour
