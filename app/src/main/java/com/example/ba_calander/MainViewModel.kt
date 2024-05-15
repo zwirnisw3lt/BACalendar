@@ -10,6 +10,10 @@ import android.net.Uri
 import android.util.Log
 import android.webkit.WebResourceRequest
 import android.widget.Toast
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.runtime.Composable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -28,6 +32,9 @@ import java.net.SocketTimeoutException
 import java.net.URL
 import java.security.cert.X509Certificate
 import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
@@ -260,5 +267,19 @@ class MainViewModel : ViewModel() {
                 }
             }
         }
+    }
+
+    // Add a function to calculate the dates and events by date
+    suspend fun calculateDatesAndEventsByDate(startDate: LocalDate, numDays: Int): Pair<List<LocalDate>, List<List<Event>>> = withContext(Dispatchers.Default) {
+        val dates = List(numDays) { startDate.plusDays(it.toLong()) }
+
+        val eventsByDate = dates.map { date -> events.value?.filter { event ->
+            val eventDate = Instant.ofEpochMilli(event.start.toLong() * 1000)
+                .atZone(ZoneId.of("Europe/Berlin"))
+                .toLocalDate()
+            eventDate == date
+        } ?: emptyList() }
+
+        Pair(dates, eventsByDate)
     }
 }
