@@ -194,7 +194,9 @@ fun DailyCalendarView(
             val date = currentDate.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
                 horizontalArrangement = Arrangement.Center
             ) {
                 Text(
