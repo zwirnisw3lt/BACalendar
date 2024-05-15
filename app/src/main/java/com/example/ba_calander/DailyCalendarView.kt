@@ -262,7 +262,9 @@ fun DailyCalendarView(
                     }
                 } else {
 
-                    HorizontalPager(state = pagerState) { page ->
+                    HorizontalPager(
+                        state = pagerState,
+                    ) { page ->
                         // Get the date and events for the current page
                         val date = dates[page]
                         val todayEvents = eventsByDate[page]
@@ -272,6 +274,7 @@ fun DailyCalendarView(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .background(MaterialTheme.colorScheme.background)
+                                .padding(horizontal = 12.dp)
                         ) {
                             todayEvents.forEach { event ->
                                 EventItem(event, hourHeight, earliestStartTime)
