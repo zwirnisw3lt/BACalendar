@@ -54,6 +54,8 @@ enum class Screen {
     DailyCalendarView
 }
 
+//TODO: usage from back (arrow) button
+
 fun filterEvents(events: List<Event>): List<Event> {
     val currentDateTime = LocalDateTime.now(ZoneOffset.UTC)
     val currentDate = currentDateTime.toLocalDate()
