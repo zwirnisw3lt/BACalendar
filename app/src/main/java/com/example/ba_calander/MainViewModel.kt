@@ -273,12 +273,14 @@ class MainViewModel : ViewModel() {
     suspend fun calculateDatesAndEventsByDate(startDate: LocalDate, numDays: Int): Pair<List<LocalDate>, List<List<Event>>> = withContext(Dispatchers.Default) {
         val dates = List(numDays) { startDate.plusDays(it.toLong()) }
 
-        val eventsByDate = dates.map { date -> events.value?.filter { event ->
-            val eventDate = Instant.ofEpochMilli(event.start.toLong() * 1000)
-                .atZone(ZoneId.of("Europe/Berlin"))
-                .toLocalDate()
-            eventDate == date
-        } ?: emptyList() }
+        val eventsByDate = dates.map { date ->
+            events.value.filter { event ->
+                val eventDate = Instant.ofEpochMilli(event.start.toLong() * 1000)
+                    .atZone(ZoneId.of("Europe/Berlin"))
+                    .toLocalDate()
+                eventDate == date
+            }
+        }
 
         Pair(dates, eventsByDate)
     }

@@ -129,6 +129,19 @@ fun MyApp(viewModel: MainViewModel, mainActivity: MainActivity) {
                 ) {
                     Spacer(modifier = Modifier.weight(1f)) // Push items to the bottom
                     Button(onClick = {
+                        viewModel.downloadAndSaveAsIcs(viewModel.events.value, context)
+                        scope.launch {
+                            drawerState.close() // Close the drawer when the button is clicked
+                        }
+                    }) {
+                        Icon(
+                            Icons.Filled.Download,
+                            contentDescription = "Download Icon"
+                        ) // Add an icon
+                        Text("Download als .ics Datei")
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(onClick = {
                         prefs.edit().clear().apply()
                         currentScreen = Screen.LoginView
                         scope.launch {
@@ -140,19 +153,6 @@ fun MyApp(viewModel: MainViewModel, mainActivity: MainActivity) {
                             contentDescription = "Logout Icon"
                         ) // Add an icon
                         Text("Ausloggen")
-                    }
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(onClick = {
-                        viewModel.downloadAndSaveAsIcs(viewModel.events.value, context)
-                        scope.launch {
-                            drawerState.close() // Close the drawer when the button is clicked
-                        }
-                    }) {
-                        Icon(
-                            Icons.Filled.Download,
-                            contentDescription = "Download Icon"
-                        ) // Add an icon
-                        Text("Download als .ics Datei")
                     }
                 }
             },
