@@ -19,7 +19,7 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### Installing
 
-1. Clone the repository: `git clone https://github.com/username/ba_calendar.git`
+1. Clone the repository: `git clone https://github.com/zwirnisw3lt/ba_calendar.git`
 2. Open the project in Android Studio.
 3. Run the app on an emulator or a real device.
 
