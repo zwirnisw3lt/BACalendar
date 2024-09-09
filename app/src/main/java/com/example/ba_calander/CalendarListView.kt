@@ -27,11 +27,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.Button
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Divider
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Filter1
+import androidx.compose.material.icons.filled.Filter2
 import androidx.compose.material.icons.filled.ViewDay
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
@@ -39,6 +42,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -75,7 +81,33 @@ fun CalendarListView(
 
     val prefs = context.getSharedPreferences("MyApp", Context.MODE_PRIVATE)
 
-    val groupedEvents = filterEvents(events).groupBy {
+    // Load the selected group from shared preferences
+    var selectedGroup by remember {
+        mutableStateOf(prefs.getInt("selectedGroup", 1))
+    }
+
+    // Save the selected group in shared preferences when it changes
+    fun saveSelectedGroup(group: Int) {
+        prefs.edit().putInt("selectedGroup", group).apply()
+    }
+
+    // Get the current date
+    val currentDate = ZonedDateTime.now(ZoneId.of("Europe/Berlin")).toLocalDate()
+
+    // Filter events based on the selected group and current date
+    val filteredEvents = events.filter { event ->
+        val eventDate = Instant.ofEpochSecond(event.start.toLong()).atZone(ZoneId.of("Europe/Berlin")).toLocalDate()
+        val groupPattern = "Gruppe \\d+".toRegex()
+        val matchResult = groupPattern.find(event.title)
+        if (matchResult != null) {
+            event.title.contains("Gruppe $selectedGroup") && !eventDate.isBefore(currentDate)
+        } else {
+            !eventDate.isBefore(currentDate) // Show events that do not contain "Gruppe" and are not in the past
+        }
+    }
+
+    // Group events by date
+    val groupedEvents = filteredEvents.groupBy {
         Instant.ofEpochSecond(it.start.toLong()).atZone(ZoneId.of("Europe/Berlin")).toLocalDate()
     }
 
@@ -149,14 +181,23 @@ fun CalendarListView(
                                 "Listenansicht",
                                 fontSize = 30.sp,
                                 fontWeight = FontWeight.Bold,
-                                modifier = Modifier.weight(0.7f) //allocate 100% of the remaining width to the Text
+                                modifier = Modifier.weight(1f)
                             )
                             IconButton(onClick = onSwitchViewClicked) {
                                 Icon(
                                     imageVector = Icons.Filled.ViewDay,
                                     contentDescription = "Switch to Daily View",
-                                    tint = MaterialTheme.colorScheme.onSurface,
-                                    modifier = Modifier.weight(0.3f) // allocate 0% of the remaining width to the IconButton
+                                    tint = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                            IconButton(onClick = {
+                                selectedGroup = if (selectedGroup == 1) 2 else 1
+                                saveSelectedGroup(selectedGroup)
+                            }) {
+                                Icon(
+                                    imageVector = if (selectedGroup == 1) Icons.Default.Filter1 else Icons.Default.Filter2,
+                                    contentDescription = "Toggle Group",
+                                    tint = if (MaterialTheme.colorScheme.background == Color.Black) Color.White else Color.Black
                                 )
                             }
                         }
