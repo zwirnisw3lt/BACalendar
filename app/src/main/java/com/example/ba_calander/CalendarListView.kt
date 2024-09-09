@@ -35,6 +35,7 @@ import androidx.compose.material.IconButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Filter1
 import androidx.compose.material.icons.filled.Filter2
+import androidx.compose.material.icons.filled.Filter3
 import androidx.compose.material.icons.filled.ViewDay
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
@@ -97,12 +98,12 @@ fun CalendarListView(
     // Filter events based on the selected group and current date
     val filteredEvents = events.filter { event ->
         val eventDate = Instant.ofEpochSecond(event.start.toLong()).atZone(ZoneId.of("Europe/Berlin")).toLocalDate()
-        val groupPattern = "Gruppe \\d+".toRegex()
+        val groupPattern = "Gruppe \\d+|Gr\\. \\d+".toRegex()
         val matchResult = groupPattern.find(event.title)
         if (matchResult != null) {
-            event.title.contains("Gruppe $selectedGroup") && !eventDate.isBefore(currentDate)
+            (selectedGroup == 3 || event.title.contains("Gruppe $selectedGroup") || event.title.contains("Gr. $selectedGroup")) && !eventDate.isBefore(currentDate)
         } else {
-            !eventDate.isBefore(currentDate) // Show events that do not contain "Gruppe" and are not in the past
+            !eventDate.isBefore(currentDate) // Show events that do not contain "Gruppe" or "Gr." and are not in the past
         }
     }
 
@@ -191,14 +192,17 @@ fun CalendarListView(
                                 )
                             }
                             IconButton(onClick = {
-                                selectedGroup = if (selectedGroup == 1) 2 else 1
+                                selectedGroup = (selectedGroup % 3) + 1
                                 saveSelectedGroup(selectedGroup)
                             }) {
                                 Icon(
-                                    imageVector = if (selectedGroup == 1) Icons.Default.Filter1 else Icons.Default.Filter2,
+                                    imageVector = when (selectedGroup) {
+                                        1 -> Icons.Default.Filter1
+                                        2 -> Icons.Default.Filter2
+                                        else -> Icons.Default.Filter3
+                                    },
                                     contentDescription = "Toggle Group",
-                                    tint = if (MaterialTheme.colorScheme.background == Color.Black) Color.White else Color.Black
-                                )
+                                    tint = MaterialTheme.colorScheme.onSurface                        )
                             }
                         }
                     }
