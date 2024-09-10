@@ -184,13 +184,6 @@ fun CalendarListView(
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.weight(1f)
                             )
-                            IconButton(onClick = onSwitchViewClicked) {
-                                Icon(
-                                    imageVector = Icons.Filled.ViewDay,
-                                    contentDescription = "Switch to Daily View",
-                                    tint = MaterialTheme.colorScheme.onSurface
-                                )
-                            }
                             IconButton(onClick = {
                                 selectedGroup = (selectedGroup % 3) + 1
                                 saveSelectedGroup(selectedGroup)
@@ -203,6 +196,13 @@ fun CalendarListView(
                                     },
                                     contentDescription = "Toggle Group",
                                     tint = MaterialTheme.colorScheme.onSurface                        )
+                            }
+                            IconButton(onClick = onSwitchViewClicked) {
+                                Icon(
+                                    imageVector = Icons.Filled.ViewDay,
+                                    contentDescription = "Switch to Daily View",
+                                    tint = MaterialTheme.colorScheme.onSurface
+                                )
                             }
                         }
                     }
